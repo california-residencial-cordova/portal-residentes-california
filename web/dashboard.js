@@ -481,3 +481,9 @@ async function renderPerfil() {
       banner.innerHTML = `<div class="banner banner-error">No se pudo cambiar: ${escapeHtml(error.message)}</div>`;
       return;
     }
+    banner.innerHTML = '<div class="banner banner-ok">Contraseña actualizada.</div>';
+    document.getElementById("passwordForm").reset();
+  });
+}
+
+init();
