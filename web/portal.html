@@ -54,7 +54,12 @@
     padding: 0 24px;
     display: flex;
     flex-direction: column;
+    align-items: flex-end;
     justify-content: center;
+  }
+  .pv-hero-text .inner {
+    max-width: 320px;
+    text-align: right;
   }
   .pv-hero-text span.kicker {
     font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
@@ -133,13 +138,6 @@
 
   .pv-footer { padding: 24px; text-align: center; color: var(--muted); font-size: 12.5px; margin-top: 30px; }
 
-  .pv-flyer-card {
-    display: block; max-width: 420px; margin: 0 auto 22px auto;
-    border-radius: 14px; overflow: hidden; border: 1px solid var(--border);
-    box-shadow: 0 10px 26px rgba(30,28,22,0.08);
-  }
-  .pv-flyer-card img { width: 100%; display: block; }
-
   /* Modal de noticias */
   #newsModalOverlay {
     display: none; position: fixed; inset: 0; background: rgba(28,31,35,0.55);
@@ -181,8 +179,10 @@
   <div class="pv-hero" id="inicio">
     <img src="img/hero.jpg" alt="">
     <div class="pv-hero-text">
-      <span class="kicker">// California Residencial</span>
-      <p>Noticias, convocatorias, informes, reuniones y todo lo que pasa en el fraccionamiento, en un solo lugar.</p>
+      <div class="inner">
+        <span class="kicker">// California Residencial</span>
+        <p>Noticias, convocatorias, informes, reuniones y todo lo que pasa en el fraccionamiento, en un solo lugar.</p>
+      </div>
     </div>
   </div>
 
@@ -194,11 +194,12 @@
     <section class="pv-section" id="noticias">
       <div class="pv-section-head"><span class="dot"></span><h2>Noticias y avisos</h2></div>
 
-      <a href="img/volante-asamblea.jpg" target="_blank" rel="noopener" class="pv-flyer-card">
-        <img src="img/volante-asamblea.jpg" alt="Volante: convocatoria a la Asamblea General Extraordinaria, viernes 16 de octubre, 8:00 p.m., en el parque principal">
-      </a>
-
       <div class="pv-grid-3">
+        <a href="img/volante-asamblea.jpg" target="_blank" rel="noopener" class="pv-card" style="text-decoration:none;">
+          <span class="date">16 de octubre de 2026</span>
+          <h3>Asamblea General Extraordinaria</h3>
+          <p>Convocamos a todos los residentes de Cerrada Córdoba a la Asamblea General Extraordinaria, para presentar al equipo que se postula como nuevo comité vecinal, el acta constitutiva y el reglamento interno. Tu participación es clave para darle formalidad oficial al comité.</p>
+        </a>
         <button type="button" class="pv-card" onclick="openNews('reciclaje')">
           <span class="date">[FECHA]</span>
           <h3>Se retoma la recolección de reciclaje</h3>
