@@ -419,6 +419,21 @@ async function renderPerfil() {
         ${isComite ? "" : " — solo el comité puede cambiar este dato."}
       </p>
     </div>
+
+    <div class="card">
+      <h2>Cambiar contraseña</h2>
+      <p class="hint">Si el comité te dio una contraseña temporal, cámbiala aquí por una que solo tú conozcas.</p>
+      <div id="passwordBanner"></div>
+      <form id="passwordForm">
+        <label for="pwNueva">Nueva contraseña</label>
+        <input type="password" id="pwNueva" required minlength="6" autocomplete="new-password">
+
+        <label for="pwConfirma">Confirmar contraseña</label>
+        <input type="password" id="pwConfirma" required minlength="6" autocomplete="new-password">
+
+        <button type="submit" class="btn btn-primary">Actualizar contraseña</button>
+      </form>
+    </div>
   `;
 
   document.getElementById("perfilForm").addEventListener("submit", async (e) => {
@@ -440,6 +455,31 @@ async function renderPerfil() {
     document.getElementById("userLabel").textContent =
       CURRENT_PROFILE.nombre_completo + " · " + (CURRENT_PROFILE.rol === "comite" ? "Comité" : "Residente");
     banner.innerHTML = '<div class="banner banner-ok">Cambios guardados.</div>';
+  });
+
+  document.getElementById("passwordForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const banner = document.getElementById("passwordBanner");
+    banner.innerHTML = "";
+    const nueva = document.getElementById("pwNueva").value;
+    const confirma = document.getElementById("pwConfirma").value;
+
+    if (nueva !== confirma) {
+      banner.innerHTML = '<div class="banner banner-error">Las contraseñas no coinciden.</div>';
+      return;
+    }
+    if (nueva.length < 6) {
+      banner.innerHTML = '<div class="banner banner-error">La contraseña debe tener al menos 6 caracteres.</div>';
+      return;
+    }
+
+    const { error } = await supabaseClient.auth.updateUser({ password: nueva });
+    if (error) {
+      banner.innerHTML = `<div class="banner banner-error">No se pudo cambiar: ${escapeHtml(error.message)}</div>`;
+      return;
+    }
+    banner.innerHTML = '<div class="banner banner-ok">Contraseña actualizada.</div>';
+    document.getElementById("passwordForm").reset();
   });
 }
 
