@@ -132,6 +132,13 @@
 
   .pv-footer { padding: 24px; text-align: center; color: var(--muted); font-size: 12.5px; margin-top: 30px; }
 
+  .pv-flyer-card {
+    display: block; max-width: 420px; margin: 0 auto 22px auto;
+    border-radius: 14px; overflow: hidden; border: 1px solid var(--border);
+    box-shadow: 0 10px 26px rgba(30,28,22,0.08);
+  }
+  .pv-flyer-card img { width: 100%; display: block; }
+
   /* Modal de noticias */
   #newsModalOverlay {
     display: none; position: fixed; inset: 0; background: rgba(28,31,35,0.55);
@@ -185,6 +192,11 @@
     <!-- Noticias -->
     <section class="pv-section" id="noticias">
       <div class="pv-section-head"><span class="dot"></span><h2>Noticias y avisos</h2></div>
+
+      <a href="img/volante-asamblea.jpg" target="_blank" rel="noopener" class="pv-flyer-card">
+        <img src="img/volante-asamblea.jpg" alt="Volante: convocatoria a la Asamblea General Extraordinaria, viernes 16 de octubre, 8:00 p.m., en el parque principal">
+      </a>
+
       <div class="pv-grid-3">
         <button type="button" class="pv-card" onclick="openNews('reciclaje')">
           <span class="date">[FECHA]</span>
@@ -257,7 +269,7 @@
           <span class="k" style="display:block; margin-bottom:8px;">Orden del día</span>
           <ol>
             <li><span class="n">1</span><span>Bienvenida y registro de asistencia — tomar lista de los vecinos presentes</span></li>
-            <li><span class="n">2</span><span>Presentar a cada integrante del comité por nombre y cargo</span></li>
+            <li><span class="n">2</span><span>Presentar a cada integrante de la planilla por nombre y cargo</span></li>
             <li><span class="n">3</span><span>Explicar brevemente cómo y para qué se formó el comité</span></li>
             <li><span class="n">4</span><span>Leer el acta constitutiva en voz alta</span></li>
             <li><span class="n">5</span><span>Presentar el reglamento interno propuesto</span></li>
