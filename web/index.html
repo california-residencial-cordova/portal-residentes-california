@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Portal de Residentes — California Residencial</title>
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+</head>
+<body>
+
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <h1>Portal de Residentes</h1>
+      <p class="subtitle">California Residencial · Cerrada Córdoba</p>
+
+      <div id="banner" class="banner banner-error" style="display:none;"></div>
+
+      <!-- Formulario de inicio de sesión -->
+      <form id="loginForm">
+        <label for="loginEmail">Correo</label>
+        <input type="email" id="loginEmail" required autocomplete="email">
+
+        <label for="loginPassword">Contraseña</label>
+        <input type="password" id="loginPassword" required autocomplete="current-password">
+
+        <button type="submit" class="btn btn-primary" style="width:100%;">Entrar</button>
+      </form>
+
+      <!-- Formulario de registro (oculto por defecto) -->
+      <form id="signupForm" style="display:none;">
+        <label for="suNombre">Nombre completo</label>
+        <input type="text" id="suNombre" required autocomplete="name">
+
+        <label for="suDomicilio">Domicilio (lote / calle y número)</label>
+        <input type="text" id="suDomicilio" required placeholder="Ej. Lote 14, Cerrada Córdoba">
+
+        <label for="suTipo">Tipo de ocupación</label>
+        <select id="suTipo" required>
+          <option value="propietario">Propietario</option>
+          <option value="arrendatario">Arrendatario (renta)</option>
+        </select>
+
+        <label for="suEmail">Correo</label>
+        <input type="email" id="suEmail" required autocomplete="email">
+
+        <label for="suPassword">Contraseña</label>
+        <input type="password" id="suPassword" required minlength="6" autocomplete="new-password">
+
+        <button type="submit" class="btn btn-primary" style="width:100%;">Crear cuenta</button>
+      </form>
+
+      <div class="toggle-row">
+        <span id="toSignup">¿Eres nuevo? <a>Crea tu cuenta</a></span>
+        <span id="toLogin" style="display:none;">¿Ya tienes cuenta? <a>Inicia sesión</a></span>
+      </div>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="supabase-client.js"></script>
+  <script>
+    const banner = document.getElementById("banner");
+    function showError(msg) {
+      banner.textContent = msg;
+      banner.className = "banner banner-error";
+      banner.style.display = "block";
+    }
+    function showOk(msg) {
+      banner.textContent = msg;
+      banner.className = "banner banner-ok";
+      banner.style.display = "block";
+    }
+
+    // Si ya hay sesión activa, pasa directo al dashboard.
+    getSession().then((session) => {
+      if (session) window.location.href = "dashboard.html";
+    });
+
+    // Alternar entre login y registro
+    const loginForm = document.getElementById("loginForm");
+    const signupForm = document.getElementById("signupForm");
+    document.getElementById("toSignup").addEventListener("click", (e) => {
+      if (e.target.tagName !== "A") return;
+      loginForm.style.display = "none";
+      signupForm.style.display = "block";
+      document.getElementById("toSignup").style.display = "none";
+      document.getElementById("toLogin").style.display = "block";
+      banner.style.display = "none";
+    });
+    document.getElementById("toLogin").addEventListener("click", (e) => {
+      if (e.target.tagName !== "A") return;
+      signupForm.style.display = "none";
+      loginForm.style.display = "block";
+      document.getElementById("toLogin").style.display = "none";
+      document.getElementById("toSignup").style.display = "block";
+      banner.style.display = "none";
+    });
+
+    // Iniciar sesión
+    loginForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      banner.style.display = "none";
+      const email = document.getElementById("loginEmail").value.trim();
+      const password = document.getElementById("loginPassword").value;
+      const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) {
+        showError("No se pudo iniciar sesión: " + error.message);
+        return;
+      }
+      window.location.href = "dashboard.html";
+    });
+
+    // Crear cuenta
+    signupForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      banner.style.display = "none";
+      const nombre_completo = document.getElementById("suNombre").value.trim();
+      const domicilio = document.getElementById("suDomicilio").value.trim();
+      const tipo_ocupacion = document.getElementById("suTipo").value;
+      const email = document.getElementById("suEmail").value.trim();
+      const password = document.getElementById("suPassword").value;
+
+      const { error } = await supabaseClient.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { nombre_completo, domicilio, tipo_ocupacion },
+        },
+      });
+      if (error) {
+        showError("No se pudo crear la cuenta: " + error.message);
+        return;
+      }
+      showOk("Cuenta creada. Si tu proyecto pide confirmar el correo, revisa tu bandeja antes de entrar.");
+      signupForm.reset();
+    });
+  </script>
+</body>
+</html>
