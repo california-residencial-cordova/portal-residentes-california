@@ -39,7 +39,7 @@ async function init() {
     profile.nombre_completo + " · " + (profile.rol === "comite" ? "Comité" : "Residente");
 
   renderTabs();
-  const firstTab = profile.rol === "comite" ? "padron" : "mis-visitas";
+  const firstTab = profile.rol === "comite" ? "padron" : "perfil";
   switchTab(firstTab);
 }
 
@@ -51,10 +51,7 @@ function renderTabs() {
         ["visitas", "Control de visitas"],
         ["perfil", "Mi perfil"],
       ]
-    : [
-        ["mis-visitas", "Mis visitas"],
-        ["perfil", "Mi perfil"],
-      ];
+    : [["perfil", "Mi perfil"]];
 
   const tabsHtml =
     '<div class="tabs" id="tabsRow">' +
@@ -85,81 +82,9 @@ function switchTab(tab) {
   const content = document.getElementById("tabContent");
   content.innerHTML = '<div class="loading">Cargando…</div>';
 
-  if (tab === "mis-visitas") return renderMisVisitas();
   if (tab === "padron") return renderPadron();
   if (tab === "visitas") return renderVisitasComite();
   if (tab === "perfil") return renderPerfil();
-}
-
-// ============================================================
-// Tab: Mis visitas (residente normal)
-// ============================================================
-async function renderMisVisitas() {
-  const content = document.getElementById("tabContent");
-
-  const { data: visitas, error } = await supabaseClient
-    .from("visitas")
-    .select("*")
-    .eq("residente_id", CURRENT_PROFILE.id)
-    .order("entrada", { ascending: false })
-    .limit(50);
-
-  if (error) {
-    content.innerHTML = `<div class="banner banner-error">No se pudieron cargar tus visitas: ${escapeHtml(error.message)}</div>`;
-    return;
-  }
-
-  content.innerHTML = `
-    <div class="card">
-      <h2>Registrar visita</h2>
-      <p class="hint">Domicilio: ${escapeHtml(CURRENT_PROFILE.domicilio)}</p>
-      <div id="formBanner"></div>
-      <form id="nuevaVisitaForm">
-        <div class="form-row">
-          <div>
-            <label for="vNombre">Nombre del visitante</label>
-            <input type="text" id="vNombre" required>
-          </div>
-          <div>
-            <label for="vPlacas">Vehículo / placas (opcional)</label>
-            <input type="text" id="vPlacas">
-          </div>
-        </div>
-        <label for="vMotivo">Motivo (opcional)</label>
-        <input type="text" id="vMotivo" placeholder="Ej. visita familiar, entrega, servicio">
-        <button type="submit" class="btn btn-primary">Registrar entrada</button>
-      </form>
-    </div>
-    <div class="card">
-      <h2>Historial</h2>
-      <div id="visitasTableWrap"></div>
-    </div>
-  `;
-
-  renderVisitasTable(visitas, { showDomicilio: false, canClose: true });
-
-  document.getElementById("nuevaVisitaForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const visitante_nombre = document.getElementById("vNombre").value.trim();
-    const vehiculo_placas = document.getElementById("vPlacas").value.trim();
-    const motivo = document.getElementById("vMotivo").value.trim();
-
-    const { error: insErr } = await supabaseClient.from("visitas").insert({
-      residente_id: CURRENT_PROFILE.id,
-      visitante_nombre,
-      vehiculo_placas: vehiculo_placas || null,
-      motivo: motivo || null,
-      registrado_por: CURRENT_PROFILE.id,
-    });
-
-    const banner = document.getElementById("formBanner");
-    if (insErr) {
-      banner.innerHTML = `<div class="banner banner-error">No se pudo registrar: ${escapeHtml(insErr.message)}</div>`;
-      return;
-    }
-    banner.innerHTML = "";
-    renderMisVisitas();
-  });
 }
 
 // ============================================================

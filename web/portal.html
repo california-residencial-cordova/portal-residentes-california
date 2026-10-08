@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Portal Vecinal — California Residencial</title>
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+  .pv-nav {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    overflow-x: auto;
+    padding: 0 24px 14px 24px;
+  }
+  .pv-nav a {
+    color: var(--ink-soft);
+    font-size: 13.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    padding: 4px 2px;
+    border-bottom: 2px solid transparent;
+    text-decoration: none;
+  }
+  .pv-nav a:hover { color: var(--ink); border-bottom: 2px solid var(--accent); }
+
+  .pv-hero {
+    position: relative;
+    width: 100%;
+    height: 220px;
+    overflow: hidden;
+  }
+  .pv-hero img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .pv-hero::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(15,16,14,0.22);
+  }
+  .pv-hero-text {
+    position: relative;
+    z-index: 2;
+    max-width: 980px;
+    height: 100%;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .pv-hero-text span.kicker {
+    font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+    font-size: 12px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: #F2D9C4;
+    font-weight: 600;
+  }
+  .pv-hero-text p {
+    margin: 10px 0 0 0;
+    font-size: 15.5px;
+    line-height: 1.5;
+    color: #EDEAE0;
+    max-width: 520px;
+  }
+
+  .pv-section { padding: 44px 24px 8px 24px; max-width: 980px; margin: 0 auto; }
+  .pv-section-head { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+  .pv-section-head .dot { width: 8px; height: 8px; background: var(--warn); border-radius: 2px; display: inline-block; }
+  .pv-section-head h2 { margin: 0; font-size: 15px; letter-spacing: 2px; text-transform: uppercase; }
+
+  .pv-grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px; }
+  .pv-grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 16px; }
+  @media (max-width: 820px) {
+    .pv-grid-3, .pv-grid-2 { grid-template-columns: 1fr; }
+  }
+
+  .pv-card {
+    display: flex; flex-direction: column; gap: 8px;
+    padding: 18px; background: #fff; border: 1px solid var(--border);
+    border-top: 2px solid var(--accent); border-radius: 12px;
+    text-align: left; font-family: inherit; cursor: pointer; width: 100%;
+  }
+  .pv-card .date { font-family: 'SF Mono', 'Menlo', 'Consolas', monospace; font-size: 11px; letter-spacing: 1px; color: var(--muted); font-weight: 600; }
+  .pv-card h3 { margin: 0; font-size: 15.5px; }
+  .pv-card p { margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--ink-soft); }
+
+  .pv-link-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 14px 20px; border-bottom: 1px solid #F0ECE1;
+  }
+  .pv-link-row:last-child { border-bottom: none; }
+  .pv-link-row .name { font-size: 14px; font-weight: 600; }
+  .pv-link-row .sub { font-size: 12.5px; color: var(--muted); display: block; }
+  .pv-link-row .links { display: flex; gap: 14px; white-space: nowrap; }
+  .pv-link-row .links a { font-size: 13px; color: var(--warn); font-weight: 600; text-decoration: none; }
+  .pv-link-row .links a:hover { text-decoration: underline; }
+  .pv-link-row .links span.placeholder { font-size: 13px; color: var(--muted); }
+
+  .pv-box { background: #fff; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 20px; }
+
+  .pv-agenda { display: flex; flex-direction: column; gap: 18px; padding: 22px 24px; background: #fff; border: 1px solid var(--border); border-top: 2px solid var(--accent); border-radius: 12px; margin-bottom: 20px; }
+  .pv-agenda .label { font-family: 'SF Mono', 'Menlo', 'Consolas', monospace; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--warn); font-weight: 700; }
+  .pv-agenda .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .pv-agenda .meta-grid .k { font-family: 'SF Mono', 'Menlo', 'Consolas', monospace; font-size: 10.5px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); font-weight: 600; display: block; }
+  .pv-agenda .meta-grid .v { font-size: 15px; font-weight: 700; }
+  .pv-agenda ol { list-style: none; margin: 0; padding: 0; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; counter-reset: item; }
+  .pv-agenda ol li { display: flex; align-items: center; gap: 14px; padding: 10px 16px; border-bottom: 1px solid #F0ECE1; font-size: 13.5px; }
+  .pv-agenda ol li:last-child { border-bottom: none; }
+  .pv-agenda ol li .n { font-family: 'SF Mono', 'Menlo', 'Consolas', monospace; font-size: 13px; color: var(--warn); font-weight: 700; width: 18px; flex-shrink: 0; }
+
+  .pv-link-card {
+    display: flex; align-items: center; gap: 12px; padding: 14px 16px;
+    background: #fff; border: 1px solid var(--border); border-radius: 10px;
+    text-decoration: none; color: var(--ink); font-size: 14px; font-weight: 600;
+  }
+
+  .pv-wa-card {
+    display: flex; align-items: center; justify-content: space-between; gap: 14px;
+    padding: 16px 18px; background: #fff; border: 1px solid var(--border); border-radius: 12px;
+  }
+  .pv-wa-card .t { font-size: 14.5px; font-weight: 700; display: block; }
+  .pv-wa-card .s { font-size: 12.5px; color: var(--muted); display: block; margin-top: 2px; }
+  .pv-wa-btn { background: var(--ok); color: #fff; font-size: 13px; font-weight: 700; padding: 8px 14px; border-radius: 8px; white-space: nowrap; text-decoration: none; }
+
+  .pv-footer { padding: 24px; text-align: center; color: var(--muted); font-size: 12.5px; margin-top: 30px; }
+
+  /* Modal de noticias */
+  #newsModalOverlay {
+    display: none; position: fixed; inset: 0; background: rgba(28,31,35,0.55);
+    z-index: 100; align-items: center; justify-content: center; padding: 24px;
+  }
+  #newsModalBox {
+    background: #fff; border-radius: 14px; max-width: 520px; width: 100%;
+    max-height: 80vh; overflow-y: auto; padding: 28px; position: relative;
+  }
+  #newsModalClose {
+    position: absolute; top: 14px; right: 14px; width: 30px; height: 30px;
+    border-radius: 8px; border: 1px solid var(--border); background: #fff;
+    color: var(--ink-soft); font-size: 17px; cursor: pointer; font-family: inherit;
+  }
+  #newsModalDate { font-family: 'SF Mono', 'Menlo', 'Consolas', monospace; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  #newsModalTitle { margin: 8px 0 12px 0; font-size: 20px; line-height: 1.25; }
+  #newsModalBody { margin: 0; font-size: 14px; line-height: 1.6; color: var(--ink-soft); white-space: pre-line; }
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <span class="brand">Portal Vecinal</span>
+    <div class="user-info">
+      <a href="dashboard.html" class="btn btn-secondary" style="text-decoration:none;">← Mi cuenta</a>
+      <button class="btn btn-secondary" id="logoutBtn">Salir</button>
+    </div>
+  </div>
+
+  <nav class="pv-nav">
+    <a href="#noticias">Noticias</a>
+    <a href="#convocatorias">Convocatorias</a>
+    <a href="#informes">Informes</a>
+    <a href="#reuniones">Reuniones</a>
+    <a href="#enlaces">Enlaces</a>
+    <a href="#grupos">Grupos</a>
+  </nav>
+
+  <div class="pv-hero" id="inicio">
+    <img src="img/hero.jpg" alt="">
+    <div class="pv-hero-text">
+      <span class="kicker">// California Residencial</span>
+      <p>Noticias, convocatorias, informes, reuniones y todo lo que pasa en el fraccionamiento, en un solo lugar.</p>
+    </div>
+  </div>
+
+  <div id="loadingGate" class="loading">Verificando tu acceso…</div>
+
+  <div id="pvContent" style="display:none;">
+
+    <!-- Noticias -->
+    <section class="pv-section" id="noticias">
+      <div class="pv-section-head"><span class="dot"></span><h2>Noticias y avisos</h2></div>
+      <div class="pv-grid-3">
+        <button type="button" class="pv-card" onclick="openNews('reciclaje')">
+          <span class="date">[FECHA]</span>
+          <h3>Se retoma la recolección de reciclaje</h3>
+          <p>A partir de este mes vuelve el contenedor de reciclaje en la entrada. Coloca cartón y plástico separados los martes por la noche.</p>
+        </button>
+        <button type="button" class="pv-card" onclick="openNews('porton')">
+          <span class="date">[FECHA]</span>
+          <h3>Mantenimiento al portón principal</h3>
+          <p>El motor del acceso vehicular estará en revisión. Durante esos días el acceso será manual, por favor ten paciencia.</p>
+        </button>
+        <button type="button" class="pv-card" onclick="openNews('comite')">
+          <span class="date">7 de octubre de 2026</span>
+          <h3>Nuevo comité vecinal en marcha</h3>
+          <p>Gracias a todos los que se sumaron en la primera reunión. Aquí iremos publicando los avances y próximos pasos.</p>
+        </button>
+      </div>
+    </section>
+
+    <!-- Convocatorias -->
+    <section class="pv-section" id="convocatorias">
+      <div class="pv-section-head"><span class="dot"></span><h2>Convocatorias</h2></div>
+      <div class="pv-grid-2">
+        <div class="pv-card" style="cursor:default;">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <h3>Se buscan voluntarios para el comité de eventos</h3>
+          </div>
+          <p>Queremos organizar la posada de fin de año. Si te gustaría ayudar con logística o decoración, avísanos en el grupo de WhatsApp.</p>
+          <span class="date">Fecha límite: [FECHA]</span>
+        </div>
+        <div class="pv-card" style="cursor:default;">
+          <h3>Renovación de cuota de mantenimiento [AÑO]</h3>
+          <p>Se convoca a los vecinos a confirmar sus datos de contacto para el padrón oficial de la colonia.</p>
+          <span class="date">Fecha límite: [FECHA]</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Informes administrativos -->
+    <section class="pv-section" id="informes">
+      <div class="pv-section-head"><span class="dot"></span><h2>Informes administrativos</h2></div>
+      <div class="pv-box">
+        <div class="pv-link-row">
+          <div><span class="name">Corte de caja — [MES, AÑO]</span><span class="sub">Ingresos y gastos del fraccionamiento</span></div>
+          <div class="links"><span class="placeholder">[Ver documento]</span></div>
+        </div>
+        <div class="pv-link-row">
+          <div><span class="name">Estado de cuenta — [MES, AÑO]</span><span class="sub">Saldo y movimientos de la cuenta del comité</span></div>
+          <div class="links"><span class="placeholder">[Ver documento]</span></div>
+        </div>
+        <div class="pv-link-row">
+          <div><span class="name">Reporte de mantenimiento — [MES, AÑO]</span><span class="sub">Trabajos realizados en áreas comunes</span></div>
+          <div class="links"><span class="placeholder">[Ver documento]</span></div>
+        </div>
+      </div>
+      <p style="font-size:13px; color:var(--muted); margin-top:-8px;">Los documentos se comparten aquí conforme el comité los publica.</p>
+    </section>
+
+    <!-- Reuniones -->
+    <section class="pv-section" id="reuniones">
+      <div class="pv-section-head"><span class="dot"></span><h2>Reuniones</h2></div>
+
+      <div class="pv-agenda">
+        <span class="label">Próxima reunión — Asamblea General Extraordinaria</span>
+        <div class="meta-grid">
+          <div><span class="k">Fecha y hora</span><span class="v">Viernes 16 de octubre · 8:00 p.m.</span></div>
+          <div><span class="k">Lugar</span><span class="v">Parque principal</span></div>
+        </div>
+        <div>
+          <span class="k" style="display:block; margin-bottom:8px;">Orden del día</span>
+          <ol>
+            <li><span class="n">1</span><span>Bienvenida y registro de asistencia — tomar lista de los vecinos presentes</span></li>
+            <li><span class="n">2</span><span>Presentar a cada integrante del comité por nombre y cargo</span></li>
+            <li><span class="n">3</span><span>Explicar brevemente cómo y para qué se formó el comité</span></li>
+            <li><span class="n">4</span><span>Leer el acta constitutiva en voz alta</span></li>
+            <li><span class="n">5</span><span>Presentar el reglamento interno propuesto</span></li>
+            <li><span class="n">6</span><span>Votación/ratificación — los vecinos presentes levantan la mano para reconocer formalmente al comité</span></li>
+            <li><span class="n">7</span><span>Firma del acta — al menos los integrantes del comité y un par de vecinos como testigos</span></li>
+            <li><span class="n">8</span><span>Mencionar los próximos pasos (ej. publicar la minuta en el portal, próxima reunión)</span></li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="pv-box">
+        <div class="pv-link-row">
+          <span class="name">Acta constitutiva del comité</span>
+          <div class="links">
+            <a href="docs/acta-constitutiva.pdf" target="_blank" rel="noopener">Ver</a>
+            <a href="docs/acta-constitutiva.docx" download>Descargar (.docx)</a>
+          </div>
+        </div>
+        <div class="pv-link-row">
+          <span class="name">Reglamento interno del comité</span>
+          <div class="links">
+            <a href="docs/reglamento-interno.pdf" target="_blank" rel="noopener">Ver</a>
+            <a href="docs/reglamento-interno.docx" download>Descargar (.docx)</a>
+          </div>
+        </div>
+        <div class="pv-link-row">
+          <span class="name">Minuta — Primera reunión del comité</span>
+          <div class="links">
+            <span class="placeholder">[Ver acta]</span>
+            <span class="placeholder">[Descargar]</span>
+          </div>
+        </div>
+        <div class="pv-link-row">
+          <span class="name">Minuta — [FECHA]</span>
+          <div class="links">
+            <span class="placeholder">[Ver acta]</span>
+            <span class="placeholder">[Descargar]</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Enlaces de interés -->
+    <section class="pv-section" id="enlaces">
+      <div class="pv-section-head"><span class="dot"></span><h2>Enlaces de interés</h2></div>
+      <div class="pv-grid-3">
+        <a href="https://www.hermosillo.gob.mx/" target="_blank" rel="noopener" class="pv-link-card">Ayuntamiento de Hermosillo</a>
+        <a href="https://app.cfe.mx/Aplicaciones/CCFE/MiEspacio/AvisoVUN.aspx" target="_blank" rel="noopener" class="pv-link-card">CFE — reportar fallas</a>
+        <a href="https://www.hermosillo.gob.mx/entidades/seguridad-publica/" target="_blank" rel="noopener" class="pv-link-card">Seguridad pública — [TELÉFONO]</a>
+      </div>
+    </section>
+
+    <!-- Grupos de WhatsApp -->
+    <section class="pv-section" id="grupos" style="padding-bottom: 40px;">
+      <div class="pv-section-head"><span class="dot"></span><h2>Grupos de WhatsApp</h2></div>
+      <div class="pv-grid-2">
+        <div class="pv-wa-card">
+          <div><span class="t">Avisos generales</span><span class="s">Noticias y comunicados del comité</span></div>
+          <a href="#" class="pv-wa-btn">Unirme</a>
+        </div>
+        <div class="pv-wa-card">
+          <div><span class="t">Seguridad y vigilancia</span><span class="s">Alertas y reportes entre vecinos</span></div>
+          <a href="#" class="pv-wa-btn">Unirme</a>
+        </div>
+      </div>
+    </section>
+
+    <div class="pv-footer">Comité Vecinal · California Residencial — solo visible para residentes con cuenta.</div>
+  </div>
+
+  <!-- Modal de noticias -->
+  <div id="newsModalOverlay" onclick="if (event.target === this) closeNews();">
+    <div id="newsModalBox">
+      <button type="button" id="newsModalClose" onclick="closeNews()" aria-label="Cerrar">×</button>
+      <span id="newsModalDate"></span>
+      <h3 id="newsModalTitle"></h3>
+      <p id="newsModalBody"></p>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="supabase-client.js"></script>
+  <script>
+    // Esta página solo es visible para quien tenga una sesión activa
+    // (residente o comité). Si no hay sesión, requireAuth() manda a index.html.
+    (async function () {
+      const auth = await requireAuth();
+      if (!auth) return;
+      document.getElementById("logoutBtn").addEventListener("click", signOut);
+      document.getElementById("loadingGate").style.display = "none";
+      document.getElementById("pvContent").style.display = "block";
+    })();
+
+    var newsData = {
+      comite: {
+        date: '7 de octubre de 2026',
+        title: 'Nuevo comité vecinal en marcha',
+        body: 'Un grupo de vecinos de Cerrada Córdoba — California Residencial se organizó para dar los primeros pasos en la formación de un comité vecinal oficial. El objetivo es representar los intereses de la colonia ante el ayuntamiento y los proveedores, y organizar temas como seguridad, limpieza, áreas verdes y finanzas comunes.\n\nComo siguiente paso, convocamos a toda la comunidad a la Asamblea General Extraordinaria el viernes 16 de octubre, a las 8:00 p.m., en el parque principal, donde se presentarán las propuestas y proyectos, entre ellos destacan: balance de ingresos y egresos, establecer una empresa de seguridad, actualización del sistema de CCTV, presentación del equipo de Creces y su acta constitutiva.\n\nGracias a todos los que se sumaron en la primera reunión — aquí iremos publicando los avances y próximos pasos.'
+      },
+      reciclaje: {
+        date: '[FECHA]',
+        title: 'Se retoma la recolección de reciclaje',
+        body: 'A partir de este mes vuelve el contenedor de reciclaje en la entrada. Coloca cartón y plástico separados los martes por la noche.\n\n[Más detalles próximamente.]'
+      },
+      porton: {
+        date: '[FECHA]',
+        title: 'Mantenimiento al portón principal',
+        body: 'El motor del acceso vehicular principal está presentando un calentamiento recurrente que compromete su funcionamiento.\n\nEsto se debe principalmente a dos factores: el alto flujo de tráfico de la colonia, que implica muchos ciclos de apertura y cierre al día, y el peso del portón —de 500 kg— que el motor debe mover en cada ciclo.\n\nPara realizar el cambio de motor también se evaluarán las condiciones físicas del portón, los rieles y las ruedas, ya que la fricción que generan produce desgaste en los materiales, lo cual puede tener un impacto importante en la vida del motor nuevo.\n\nActualmente se están cotizando modelos de diferentes marcas, considerando los costos según la necesidad que tenemos.\n\nMientras se define el reemplazo, el acceso seguirá trabajando de igual forma. Agradecemos su paciencia.'
+      }
+    };
+    function openNews(id) {
+      var item = newsData[id];
+      if (!item) return;
+      document.getElementById('newsModalDate').textContent = item.date;
+      document.getElementById('newsModalTitle').textContent = item.title;
+      document.getElementById('newsModalBody').textContent = item.body;
+      document.getElementById('newsModalOverlay').style.display = 'flex';
+    }
+    function closeNews() {
+      document.getElementById('newsModalOverlay').style.display = 'none';
+    }
+  </script>
+</body>
+</html>
