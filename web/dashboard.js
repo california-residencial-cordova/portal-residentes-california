@@ -161,6 +161,32 @@ function renderVisitasTable(visitas, opts) {
 // ============================================================
 // Tab: Padrón de residentes (solo comité)
 // ============================================================
+// Llama a la función del servidor (Edge Function) que crea o
+// elimina logins de residentes. Solo el comité puede usarla; el
+// propio servidor vuelve a checar el rol antes de hacer nada.
+// ============================================================
+async function callAdminUsers(payload) {
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  const resp = await fetch(`${window.SUPABASE_URL}/functions/v1/admin-users`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  let result;
+  try {
+    result = await resp.json();
+  } catch (e) {
+    result = { error: "Respuesta inesperada del servidor." };
+  }
+  if (!resp.ok) {
+    throw new Error(result.error || "No se pudo completar la operación.");
+  }
+  return result;
+}
+
 async function renderPadron() {
   const content = document.getElementById("tabContent");
 
@@ -194,24 +220,95 @@ async function renderPadron() {
             <option value="comite" ${r.rol === "comite" ? "selected" : ""}>Comité</option>
           </select>
         </td>
+        <td data-label="Acción">
+          <button type="button" class="btn btn-danger" data-delete-residente="${r.id}" data-nombre="${escapeHtml(r.nombre_completo)}" style="padding:6px 12px; font-size:12px;" ${r.id === CURRENT_PROFILE.id ? "disabled" : ""}>Eliminar</button>
+        </td>
       </tr>`
     )
     .join("");
 
   content.innerHTML = `
     <div class="card">
+      <h2>Agregar residente</h2>
+      <p class="hint">Crea el acceso (correo + contraseña temporal) y sus datos en un solo paso. Dale al residente su correo y contraseña para que entre y la cambie desde "Mi perfil".</p>
+      <div id="altaBanner"></div>
+      <form id="altaResidenteForm">
+        <div class="form-row">
+          <div>
+            <label for="aEmail">Correo</label>
+            <input type="email" id="aEmail" required>
+          </div>
+          <div>
+            <label for="aPassword">Contraseña temporal</label>
+            <input type="text" id="aPassword" required minlength="6">
+          </div>
+        </div>
+        <div class="form-row">
+          <div>
+            <label for="aNombre">Nombre completo</label>
+            <input type="text" id="aNombre" required>
+          </div>
+          <div>
+            <label for="aTelefono">Teléfono (opcional)</label>
+            <input type="tel" id="aTelefono">
+          </div>
+        </div>
+        <div class="form-row">
+          <div>
+            <label for="aDomicilio">Domicilio</label>
+            <input type="text" id="aDomicilio" required>
+          </div>
+          <div>
+            <label for="aTipoOcupacion">Tipo de ocupación</label>
+            <select id="aTipoOcupacion">
+              <option value="propietario">Propietario</option>
+              <option value="arrendatario">Arrendatario</option>
+              <option value="posesion_irregular">Posesión irregular</option>
+            </select>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Crear residente</button>
+      </form>
+    </div>
+
+    <div class="card">
       <h2>Padrón de residentes</h2>
       <p class="hint">La ocupación y el rol son visibles solo para el comité. Cambia el valor en la lista para actualizarlo al instante.</p>
       <div id="padronBanner"></div>
       <table>
         <thead>
-          <tr><th>Nombre</th><th>Domicilio</th><th>Teléfono</th><th>Ocupación</th><th>Rol</th></tr>
+          <tr><th>Nombre</th><th>Domicilio</th><th>Teléfono</th><th>Ocupación</th><th>Rol</th><th></th></tr>
         </thead>
         <tbody>${rows || ""}</tbody>
       </table>
       ${residentes.length === 0 ? '<div class="empty-state">Todavía no hay residentes registrados.</div>' : ""}
     </div>
   `;
+
+  document.getElementById("altaResidenteForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const banner = document.getElementById("altaBanner");
+    banner.innerHTML = "";
+    const submitBtn = e.target.querySelector("button[type=submit]");
+    submitBtn.disabled = true;
+
+    try {
+      await callAdminUsers({
+        action: "create",
+        email: document.getElementById("aEmail").value.trim(),
+        password: document.getElementById("aPassword").value,
+        nombre_completo: document.getElementById("aNombre").value.trim(),
+        telefono: document.getElementById("aTelefono").value.trim() || null,
+        domicilio: document.getElementById("aDomicilio").value.trim(),
+        tipo_ocupacion: document.getElementById("aTipoOcupacion").value,
+      });
+      banner.innerHTML = '<div class="banner banner-ok">Residente creado. Ya puede iniciar sesión con el correo y la contraseña que pusiste.</div>';
+      renderPadron();
+    } catch (err) {
+      banner.innerHTML = `<div class="banner banner-error">No se pudo crear: ${escapeHtml(err.message)}</div>`;
+      submitBtn.disabled = false;
+    }
+  });
 
   content.querySelectorAll("select[data-field]").forEach((sel) => {
     sel.addEventListener("change", async () => {
@@ -228,6 +325,25 @@ async function renderPadron() {
       } else {
         banner.innerHTML = '<div class="banner banner-ok">Actualizado.</div>';
         setTimeout(() => (banner.innerHTML = ""), 2500);
+      }
+    });
+  });
+
+  content.querySelectorAll("[data-delete-residente]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const id = btn.getAttribute("data-delete-residente");
+      const nombre = btn.getAttribute("data-nombre");
+      if (!confirm(`¿Eliminar a "${nombre}"? Esto borra su acceso por completo y no se puede deshacer.`)) {
+        return;
+      }
+      btn.disabled = true;
+      const banner = document.getElementById("padronBanner");
+      try {
+        await callAdminUsers({ action: "delete", user_id: id });
+        renderPadron();
+      } catch (err) {
+        banner.innerHTML = `<div class="banner banner-error">No se pudo eliminar: ${escapeHtml(err.message)}</div>`;
+        btn.disabled = false;
       }
     });
   });
@@ -326,7 +442,8 @@ async function renderPerfil() {
   const p = CURRENT_PROFILE;
   const isComite = p.rol === "comite";
 
-  content.innerHTML = `
+  const datosCard = isComite
+    ? `
     <div class="card">
       <h2>Mi perfil</h2>
       <div id="perfilBanner"></div>
@@ -338,16 +455,34 @@ async function renderPerfil() {
         <input type="tel" id="pTelefono" value="${escapeHtml(p.telefono || "")}">
 
         <label for="pDomicilio">Domicilio</label>
-        <input type="text" id="pDomicilio" value="${escapeHtml(p.domicilio)}" ${isComite ? "" : "disabled"}>
+        <input type="text" id="pDomicilio" value="${escapeHtml(p.domicilio)}">
 
         <button type="submit" class="btn btn-primary">Guardar cambios</button>
       </form>
       <p class="hint" style="margin-top:16px;">
         Tipo de ocupación: <span class="pill pill-${p.tipo_ocupacion}">${TIPO_OCUPACION_LABEL[p.tipo_ocupacion] || p.tipo_ocupacion}</span>
-        ${isComite ? "" : " — solo el comité puede cambiar este dato."}
       </p>
-    </div>
+    </div>`
+    : `
+    <div class="card">
+      <h2>Mi perfil</h2>
+      <p class="hint">Estos datos los administra el comité. Si hay un error o necesitas actualizarlos, pídeles que los corrijan desde el padrón.</p>
+      <label>Nombre completo</label>
+      <input type="text" value="${escapeHtml(p.nombre_completo)}" disabled>
 
+      <label>Teléfono</label>
+      <input type="tel" value="${escapeHtml(p.telefono || "—")}" disabled>
+
+      <label>Domicilio</label>
+      <input type="text" value="${escapeHtml(p.domicilio)}" disabled>
+
+      <p class="hint" style="margin-top:4px;">
+        Tipo de ocupación: <span class="pill pill-${p.tipo_ocupacion}">${TIPO_OCUPACION_LABEL[p.tipo_ocupacion] || p.tipo_ocupacion}</span>
+      </p>
+    </div>`;
+
+  content.innerHTML = `
+    ${datosCard}
     <div class="card">
       <h2>Cambiar contraseña</h2>
       <p class="hint">Si el comité te dio una contraseña temporal, cámbiala aquí por una que solo tú conozcas.</p>
@@ -364,26 +499,26 @@ async function renderPerfil() {
     </div>
   `;
 
-  document.getElementById("perfilForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const update = {
-      nombre_completo: document.getElementById("pNombre").value.trim(),
-      telefono: document.getElementById("pTelefono").value.trim() || null,
-    };
-    if (isComite) {
-      update.domicilio = document.getElementById("pDomicilio").value.trim();
-    }
-    const { error } = await supabaseClient.from("residentes").update(update).eq("id", p.id);
-    const banner = document.getElementById("perfilBanner");
-    if (error) {
-      banner.innerHTML = `<div class="banner banner-error">No se pudo guardar: ${escapeHtml(error.message)}</div>`;
-      return;
-    }
-    Object.assign(CURRENT_PROFILE, update);
-    document.getElementById("userLabel").textContent =
-      CURRENT_PROFILE.nombre_completo + " · " + (CURRENT_PROFILE.rol === "comite" ? "Comité" : "Residente");
-    banner.innerHTML = '<div class="banner banner-ok">Cambios guardados.</div>';
-  });
+  if (isComite) {
+    document.getElementById("perfilForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const update = {
+        nombre_completo: document.getElementById("pNombre").value.trim(),
+        telefono: document.getElementById("pTelefono").value.trim() || null,
+        domicilio: document.getElementById("pDomicilio").value.trim(),
+      };
+      const { error } = await supabaseClient.from("residentes").update(update).eq("id", p.id);
+      const banner = document.getElementById("perfilBanner");
+      if (error) {
+        banner.innerHTML = `<div class="banner banner-error">No se pudo guardar: ${escapeHtml(error.message)}</div>`;
+        return;
+      }
+      Object.assign(CURRENT_PROFILE, update);
+      document.getElementById("userLabel").textContent =
+        CURRENT_PROFILE.nombre_completo + " · " + (CURRENT_PROFILE.rol === "comite" ? "Comité" : "Residente");
+      banner.innerHTML = '<div class="banner banner-ok">Cambios guardados.</div>';
+    });
+  }
 
   document.getElementById("passwordForm").addEventListener("submit", async (e) => {
     e.preventDefault();
