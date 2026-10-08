@@ -21,6 +21,10 @@ async function init() {
   if (!auth) return;
   const { profile } = auth;
 
+  // Se conecta el botón de salir aquí, antes de cualquier "return",
+  // para que funcione incluso si todavía no hay perfil.
+  document.getElementById("logoutBtn").addEventListener("click", signOut);
+
   if (!profile) {
     document.getElementById("app").innerHTML =
       '<div class="card"><h2>No se encontró tu perfil</h2>' +
@@ -33,7 +37,6 @@ async function init() {
 
   document.getElementById("userLabel").textContent =
     profile.nombre_completo + " · " + (profile.rol === "comite" ? "Comité" : "Residente");
-  document.getElementById("logoutBtn").addEventListener("click", signOut);
 
   renderTabs();
   const firstTab = profile.rol === "comite" ? "padron" : "mis-visitas";
@@ -478,9 +481,3 @@ async function renderPerfil() {
       banner.innerHTML = `<div class="banner banner-error">No se pudo cambiar: ${escapeHtml(error.message)}</div>`;
       return;
     }
-    banner.innerHTML = '<div class="banner banner-ok">Contraseña actualizada.</div>';
-    document.getElementById("passwordForm").reset();
-  });
-}
-
-init();
