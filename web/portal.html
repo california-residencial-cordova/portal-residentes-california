@@ -85,7 +85,7 @@
      como una franja de ancho completo (igual que el encabezado) */
   .pv-carousel-wrap {
     width: 100%;
-    margin: 0;
+    margin: 26px 0 0 0;
     padding: 0;
   }
   .pv-carousel {
@@ -93,7 +93,9 @@
     width: 100%;
     height: clamp(220px, 28vw, 380px);
     overflow: hidden;
-    background: radial-gradient(ellipse at center, #8a5a3a 0%, #6b4226 45%, #4a2f1d 75%, #341f13 100%);
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
   }
   .pv-carousel-slide {
     position: absolute;
@@ -106,6 +108,16 @@
     opacity: 1;
     z-index: 1;
   }
+  /* Fondo: la misma imagen, difuminada y atenuada, para que el
+     degradado detrás siempre combine con los colores de cada imagen */
+  .pv-carousel-bg {
+    position: absolute;
+    inset: -30px;
+    background-size: cover;
+    background-position: center;
+    filter: blur(38px) saturate(1.15) brightness(0.78);
+    transform: scale(1.08);
+  }
   .pv-carousel-slide img {
     position: absolute;
     inset: 0;
@@ -113,6 +125,8 @@
     height: 100%;
     object-fit: contain;
     object-position: center;
+    z-index: 1;
+    filter: drop-shadow(0 12px 28px rgba(20,16,12,0.35));
   }
   .pv-carousel-arrow {
     position: absolute;
@@ -266,9 +280,11 @@
   <div class="pv-carousel-wrap">
     <div class="pv-carousel" id="pvCarousel">
       <a class="pv-carousel-slide is-active" data-slide="0" href="img/normas-convivencia.jpg" target="_blank" rel="noopener" aria-label="Ver normas de convivencia en tamaño completo">
+        <div class="pv-carousel-bg" style="background-image:url('img/normas-convivencia.jpg');"></div>
         <img src="img/normas-convivencia.jpg" alt="Normas de convivencia para la Asamblea Extraordinaria">
       </a>
       <a class="pv-carousel-slide" data-slide="1" href="img/volante-asamblea.jpg" target="_blank" rel="noopener" aria-label="Ver volante de la Asamblea General Extraordinaria en tamaño completo">
+        <div class="pv-carousel-bg" style="background-image:url('img/volante-asamblea.jpg');"></div>
         <img src="img/volante-asamblea.jpg" alt="Volante de la Asamblea General Extraordinaria">
       </a>
 
