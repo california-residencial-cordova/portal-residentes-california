@@ -48,6 +48,7 @@ function renderTabs() {
   const tabs = isComite
     ? [
         ["padron", "Padrón de residentes"],
+        ["lotes", "Lotes y casas vacías"],
         ["visitas", "Control de visitas"],
         ["perfil", "Mi perfil"],
       ]
@@ -83,6 +84,7 @@ function switchTab(tab) {
   content.innerHTML = '<div class="loading">Cargando…</div>';
 
   if (tab === "padron") return renderPadron();
+  if (tab === "lotes") return renderLotes();
   if (tab === "visitas") return renderVisitasComite();
   if (tab === "perfil") return renderPerfil();
 }
@@ -201,8 +203,13 @@ async function renderPadron() {
   }
 
   const rows = residentes
-    .map(
-      (r) => `
+    .map((r) => {
+      const suspendido = r.estatus_acceso === "suspendido";
+      const estatusDetalle = r.fecha_estatus
+        ? `<div class="hint" style="margin:4px 0 0 0; font-size:11.5px;">${formatDateTime(r.fecha_estatus)}${r.motivo_estatus ? " — " + escapeHtml(r.motivo_estatus) : ""}</div>`
+        : "";
+      const esUnoMismo = r.id === CURRENT_PROFILE.id;
+      return `
       <tr>
         <td data-label="Nombre">${escapeHtml(r.nombre_completo)}</td>
         <td data-label="Domicilio">${escapeHtml(r.domicilio)}</td>
@@ -220,14 +227,35 @@ async function renderPadron() {
             <option value="comite" ${r.rol === "comite" ? "selected" : ""}>Comité</option>
           </select>
         </td>
-        <td data-label="Acción">
-          <button type="button" class="btn btn-danger" data-delete-residente="${r.id}" data-nombre="${escapeHtml(r.nombre_completo)}" style="padding:6px 12px; font-size:12px;" ${r.id === CURRENT_PROFILE.id ? "disabled" : ""}>Eliminar</button>
+        <td data-label="Estatus de acceso">
+          <span class="pill pill-${suspendido ? "suspendido" : "activo"}">${suspendido ? "Suspendido" : "Activo"}</span>
+          ${estatusDetalle}
         </td>
-      </tr>`
-    )
+        <td data-label="Acción">
+          ${suspendido
+            ? `<button type="button" class="btn btn-secondary" data-reactivar-residente="${r.id}" data-nombre="${escapeHtml(r.nombre_completo)}" style="padding:6px 12px; font-size:12px; margin-bottom:6px;" ${esUnoMismo ? "disabled" : ""}>Reactivar</button>`
+            : `<button type="button" class="btn btn-secondary" data-suspender-residente="${r.id}" data-nombre="${escapeHtml(r.nombre_completo)}" style="padding:6px 12px; font-size:12px; margin-bottom:6px;" ${esUnoMismo ? "disabled" : ""}>Suspender</button>`
+          }
+          <button type="button" class="btn btn-danger" data-delete-residente="${r.id}" data-nombre="${escapeHtml(r.nombre_completo)}" style="padding:6px 12px; font-size:12px;" ${esUnoMismo ? "disabled" : ""}>Eliminar</button>
+        </td>
+      </tr>`;
+    })
     .join("");
 
+  const totalResidentes = residentes.length;
+  const numPropietarios = residentes.filter((r) => r.tipo_ocupacion === "propietario").length;
+  const numArrendatarios = residentes.filter((r) => r.tipo_ocupacion === "arrendatario").length;
+  const numIrregulares = residentes.filter((r) => r.tipo_ocupacion === "posesion_irregular").length;
+  const numSuspendidos = residentes.filter((r) => r.estatus_acceso === "suspendido").length;
+
   content.innerHTML = `
+    <div class="card">
+      <h2>Resumen</h2>
+      <p class="hint">
+        ${totalResidentes} residentes con cuenta · ${numPropietarios} propietarios · ${numArrendatarios} arrendatarios · ${numIrregulares} posesión irregular · ${numSuspendidos} con acceso suspendido
+      </p>
+    </div>
+
     <div class="card">
       <h2>Agregar residente</h2>
       <p class="hint">Crea el acceso (correo + contraseña temporal) y sus datos en un solo paso. Dale al residente su correo y contraseña para que entre y la cambie desde "Mi perfil".</p>
@@ -277,7 +305,7 @@ async function renderPadron() {
       <div id="padronBanner"></div>
       <table>
         <thead>
-          <tr><th>Nombre</th><th>Domicilio</th><th>Teléfono</th><th>Ocupación</th><th>Rol</th><th></th></tr>
+          <tr><th>Nombre</th><th>Domicilio</th><th>Teléfono</th><th>Ocupación</th><th>Rol</th><th>Estatus de acceso</th><th></th></tr>
         </thead>
         <tbody>${rows || ""}</tbody>
       </table>
@@ -345,6 +373,199 @@ async function renderPadron() {
         banner.innerHTML = `<div class="banner banner-error">No se pudo eliminar: ${escapeHtml(err.message)}</div>`;
         btn.disabled = false;
       }
+    });
+  });
+
+  content.querySelectorAll("[data-suspender-residente]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const id = btn.getAttribute("data-suspender-residente");
+      const nombre = btn.getAttribute("data-nombre");
+      if (!confirm(`¿Suspender el acceso de "${nombre}"? No podrá iniciar sesión, pero su información y su historial se conservan por si regresa.`)) {
+        return;
+      }
+      const motivo = prompt("Motivo (opcional), ej. \"se mudó en octubre 2026\":", "") || "";
+      btn.disabled = true;
+      const banner = document.getElementById("padronBanner");
+      try {
+        await callAdminUsers({ action: "suspender", user_id: id, motivo: motivo.trim() || null });
+        renderPadron();
+      } catch (err) {
+        banner.innerHTML = `<div class="banner banner-error">No se pudo suspender: ${escapeHtml(err.message)}</div>`;
+        btn.disabled = false;
+      }
+    });
+  });
+
+  content.querySelectorAll("[data-reactivar-residente]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const id = btn.getAttribute("data-reactivar-residente");
+      const nombre = btn.getAttribute("data-nombre");
+      if (!confirm(`¿Reactivar el acceso de "${nombre}"? Podrá volver a iniciar sesión con su correo y contraseña anteriores.`)) {
+        return;
+      }
+      const motivo = prompt("Motivo (opcional), ej. \"regresó en noviembre 2026\":", "") || "";
+      btn.disabled = true;
+      const banner = document.getElementById("padronBanner");
+      try {
+        await callAdminUsers({ action: "reactivar", user_id: id, motivo: motivo.trim() || null });
+        renderPadron();
+      } catch (err) {
+        banner.innerHTML = `<div class="banner banner-error">No se pudo reactivar: ${escapeHtml(err.message)}</div>`;
+        btn.disabled = false;
+      }
+    });
+  });
+}
+
+// ============================================================
+// Tab: Lotes y casas vacías (solo comité)
+// ============================================================
+// Lleva el registro de TODOS los domicilios de la colonia, tengan
+// o no un residente con cuenta — útil para saber cuántas casas
+// están vacías. Los residentes ven esta información (solo lectura)
+// en el Portal Vecinal.
+// ============================================================
+async function renderLotes() {
+  const content = document.getElementById("tabContent");
+
+  const { data: lotes, error } = await supabaseClient
+    .from("lotes")
+    .select("*")
+    .order("domicilio", { ascending: true });
+
+  if (error) {
+    content.innerHTML = `<div class="banner banner-error">No se pudo cargar los lotes: ${escapeHtml(error.message)}</div>`;
+    return;
+  }
+
+  const total = lotes.length;
+  const ocupadas = lotes.filter((l) => l.estatus === "ocupado").length;
+  const vacias = lotes.filter((l) => l.estatus === "vacio").length;
+
+  const rows = lotes
+    .map(
+      (l) => `
+      <tr>
+        <td data-label="Domicilio">${escapeHtml(l.domicilio)}</td>
+        <td data-label="Estatus">
+          <select class="inline-select" data-lote-field="estatus" data-lote-id="${l.id}">
+            <option value="ocupado" ${l.estatus === "ocupado" ? "selected" : ""}>Ocupada</option>
+            <option value="vacio" ${l.estatus === "vacio" ? "selected" : ""}>Vacía</option>
+          </select>
+        </td>
+        <td data-label="Notas">
+          <input type="text" class="inline-input" data-lote-field="notas" data-lote-id="${l.id}" value="${escapeHtml(l.notas || "")}" placeholder="Opcional">
+        </td>
+        <td data-label="Acción">
+          <button type="button" class="btn btn-danger" data-delete-lote="${l.id}" data-domicilio="${escapeHtml(l.domicilio)}" style="padding:6px 12px; font-size:12px;">Eliminar</button>
+        </td>
+      </tr>`
+    )
+    .join("");
+
+  content.innerHTML = `
+    <div class="card">
+      <h2>Resumen</h2>
+      <p class="hint">${total} lotes registrados · ${ocupadas} ocupadas · ${vacias} vacías</p>
+    </div>
+
+    <div class="card">
+      <h2>Agregar lote</h2>
+      <p class="hint">Registra cada domicilio de la colonia, tenga o no un residente con cuenta. Así se puede saber cuántas casas están vacías.</p>
+      <div id="loteBanner"></div>
+      <form id="altaLoteForm">
+        <div class="form-row">
+          <div>
+            <label for="lDomicilio">Domicilio</label>
+            <input type="text" id="lDomicilio" required>
+          </div>
+          <div>
+            <label for="lEstatus">Estatus</label>
+            <select id="lEstatus">
+              <option value="ocupado">Ocupada</option>
+              <option value="vacio" selected>Vacía</option>
+            </select>
+          </div>
+        </div>
+        <label for="lNotas">Notas (opcional)</label>
+        <input type="text" id="lNotas" placeholder="Ej. en venta, en renta, en construcción…">
+        <button type="submit" class="btn btn-primary">Agregar lote</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Lotes de la colonia</h2>
+      <p class="hint">Esta lista es la que ven los residentes (solo lectura) en el Portal Vecinal. Cambia el estatus o las notas directo aquí para actualizarlas al instante.</p>
+      <div id="lotesBanner"></div>
+      <table>
+        <thead>
+          <tr><th>Domicilio</th><th>Estatus</th><th>Notas</th><th></th></tr>
+        </thead>
+        <tbody>${rows || ""}</tbody>
+      </table>
+      ${lotes.length === 0 ? '<div class="empty-state">Todavía no hay lotes registrados.</div>' : ""}
+    </div>
+  `;
+
+  document.getElementById("altaLoteForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const banner = document.getElementById("loteBanner");
+    banner.innerHTML = "";
+    const submitBtn = e.target.querySelector("button[type=submit]");
+    submitBtn.disabled = true;
+
+    const { error: insErr } = await supabaseClient.from("lotes").insert({
+      domicilio: document.getElementById("lDomicilio").value.trim(),
+      estatus: document.getElementById("lEstatus").value,
+      notas: document.getElementById("lNotas").value.trim() || null,
+    });
+
+    if (insErr) {
+      banner.innerHTML = `<div class="banner banner-error">No se pudo agregar: ${escapeHtml(insErr.message)}</div>`;
+      submitBtn.disabled = false;
+      return;
+    }
+    renderLotes();
+  });
+
+  content.querySelectorAll("[data-lote-field]").forEach((el) => {
+    const commit = async () => {
+      const id = el.getAttribute("data-lote-id");
+      const field = el.getAttribute("data-lote-field");
+      const value = el.value.trim();
+      const { error: updErr } = await supabaseClient
+        .from("lotes")
+        .update({ [field]: value || null })
+        .eq("id", id);
+      const banner = document.getElementById("lotesBanner");
+      if (updErr) {
+        banner.innerHTML = `<div class="banner banner-error">No se pudo actualizar: ${escapeHtml(updErr.message)}</div>`;
+      } else {
+        banner.innerHTML = '<div class="banner banner-ok">Actualizado.</div>';
+        setTimeout(() => (banner.innerHTML = ""), 2000);
+      }
+    };
+    if (el.tagName === "SELECT") {
+      el.addEventListener("change", commit);
+    } else {
+      el.addEventListener("blur", commit);
+    }
+  });
+
+  content.querySelectorAll("[data-delete-lote]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const id = btn.getAttribute("data-delete-lote");
+      const domicilio = btn.getAttribute("data-domicilio");
+      if (!confirm(`¿Eliminar el lote "${domicilio}" de la lista?`)) return;
+      btn.disabled = true;
+      const { error: delErr } = await supabaseClient.from("lotes").delete().eq("id", id);
+      const banner = document.getElementById("lotesBanner");
+      if (delErr) {
+        banner.innerHTML = `<div class="banner banner-error">No se pudo eliminar: ${escapeHtml(delErr.message)}</div>`;
+        btn.disabled = false;
+        return;
+      }
+      renderLotes();
     });
   });
 }

@@ -242,12 +242,23 @@ tr:last-child td { border-bottom: none; }
 .pill-posesion_irregular { background: #FBE8E6; color: #B3261E; }
 .pill-abierta { background: #FBF0E8; color: var(--warn); }
 .pill-cerrada { background: #ECECEC; color: var(--ink-soft); }
+.pill-ocupado { background: #E8F3EA; color: #1E7A32; }
+.pill-vacio { background: #FBE8E6; color: #B3261E; }
+.pill-activo { background: #E8F3EA; color: #1E7A32; }
+.pill-suspendido { background: #FBF0E8; color: var(--warn); }
 
 select.inline-select {
   margin: 0;
   padding: 5px 8px;
   font-size: 12.5px;
   width: auto;
+}
+
+input.inline-input {
+  margin: 0;
+  padding: 5px 8px;
+  font-size: 12.5px;
+  width: 100%;
 }
 
 .empty-state {
