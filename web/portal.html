@@ -30,8 +30,19 @@
     width: 100%;
     height: clamp(260px, 30vw, 420px);
     overflow: hidden;
+    background: #14110D;
   }
-  .pv-hero img {
+  .pv-hero-slide {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+  }
+  .pv-hero-slide.is-active {
+    opacity: 1;
+    z-index: 1;
+  }
+  .pv-hero-slide img {
     position: absolute;
     inset: 0;
     width: 100%;
@@ -39,22 +50,65 @@
     object-fit: cover;
     object-position: center 55%;
   }
-  .pv-hero::after {
-    content: "";
+  .pv-hero-slide-contain img {
+    object-fit: contain;
+    object-position: center;
+    background: #14110D;
+  }
+  .pv-hero-scrim {
     position: absolute;
     inset: 0;
     background: rgba(15,16,14,0.22);
   }
   .pv-hero-text {
-    position: relative;
+    position: absolute;
+    inset: 0;
     z-index: 2;
-    height: 100%;
     padding: 0 24px 22px 24px;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     justify-content: flex-end;
   }
+  .pv-hero-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 3;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(20,17,13,0.45);
+    color: #fff;
+    font-size: 19px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .pv-hero-arrow:hover { background: rgba(20,17,13,0.68); }
+  .pv-hero-arrow-prev { left: 12px; }
+  .pv-hero-arrow-next { right: 12px; }
+  .pv-hero-dots {
+    position: absolute;
+    bottom: 14px;
+    right: 18px;
+    z-index: 3;
+    display: flex;
+    gap: 7px;
+  }
+  .pv-hero-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: none;
+    padding: 0;
+    background: rgba(255,255,255,0.45);
+    cursor: pointer;
+  }
+  .pv-hero-dot.is-active { background: #fff; }
   .pv-hero-text .inner {
     max-width: 340px;
     text-align: left;
@@ -175,12 +229,29 @@
   </nav>
 
   <div class="pv-hero" id="inicio">
-    <img src="img/hero.jpg" alt="">
-    <div class="pv-hero-text">
-      <div class="inner">
-        <span class="kicker">// California Residencial</span>
-        <p>Noticias, convocatorias, informes, reuniones y todo lo que pasa en el fraccionamiento, en un solo lugar.</p>
+    <div class="pv-hero-slide is-active" data-slide="0">
+      <img src="img/hero.jpg" alt="">
+      <div class="pv-hero-scrim"></div>
+      <div class="pv-hero-text">
+        <div class="inner">
+          <span class="kicker">// California Residencial</span>
+          <p>Noticias, convocatorias, informes, reuniones y todo lo que pasa en el fraccionamiento, en un solo lugar.</p>
+        </div>
       </div>
+    </div>
+    <a class="pv-hero-slide pv-hero-slide-contain" data-slide="1" href="img/normas-convivencia.jpg" target="_blank" rel="noopener" aria-label="Ver normas de convivencia en tamaño completo">
+      <img src="img/normas-convivencia.jpg" alt="Normas de convivencia para la Asamblea Extraordinaria">
+    </a>
+    <a class="pv-hero-slide pv-hero-slide-contain" data-slide="2" href="img/volante-asamblea.jpg" target="_blank" rel="noopener" aria-label="Ver volante de la Asamblea General Extraordinaria en tamaño completo">
+      <img src="img/volante-asamblea.jpg" alt="Volante de la Asamblea General Extraordinaria">
+    </a>
+
+    <button type="button" class="pv-hero-arrow pv-hero-arrow-prev" id="heroPrevBtn" aria-label="Imagen anterior">‹</button>
+    <button type="button" class="pv-hero-arrow pv-hero-arrow-next" id="heroNextBtn" aria-label="Imagen siguiente">›</button>
+    <div class="pv-hero-dots" id="heroDots">
+      <button type="button" class="pv-hero-dot is-active" data-dot="0" aria-label="Ir a la imagen 1"></button>
+      <button type="button" class="pv-hero-dot" data-dot="1" aria-label="Ir a la imagen 2"></button>
+      <button type="button" class="pv-hero-dot" data-dot="2" aria-label="Ir a la imagen 3"></button>
     </div>
   </div>
 
@@ -353,6 +424,46 @@
   <script src="config.js"></script>
   <script src="supabase-client.js"></script>
   <script>
+    // Carrusel del encabezado: rota automáticamente entre la foto del
+    // fraccionamiento, las normas de convivencia y el volante de la
+    // asamblea. También se puede navegar con las flechas o los puntos.
+    (function () {
+      const slides = Array.from(document.querySelectorAll(".pv-hero-slide"));
+      const dots = Array.from(document.querySelectorAll(".pv-hero-dot"));
+      if (slides.length === 0) return;
+
+      let current = 0;
+      let timer = null;
+
+      function goTo(index) {
+        current = (index + slides.length) % slides.length;
+        slides.forEach((s, i) => s.classList.toggle("is-active", i === current));
+        dots.forEach((d, i) => d.classList.toggle("is-active", i === current));
+      }
+
+      function startAutoplay() {
+        clearInterval(timer);
+        timer = setInterval(() => goTo(current + 1), 6000);
+      }
+
+      document.getElementById("heroPrevBtn").addEventListener("click", () => {
+        goTo(current - 1);
+        startAutoplay();
+      });
+      document.getElementById("heroNextBtn").addEventListener("click", () => {
+        goTo(current + 1);
+        startAutoplay();
+      });
+      dots.forEach((d) => {
+        d.addEventListener("click", () => {
+          goTo(parseInt(d.getAttribute("data-dot"), 10));
+          startAutoplay();
+        });
+      });
+
+      startAutoplay();
+    })();
+
     // Esta página solo es visible para quien tenga una sesión activa
     // (residente o comité). Si no hay sesión, requireAuth() manda a index.html.
     (async function () {
