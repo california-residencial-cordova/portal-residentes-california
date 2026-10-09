@@ -184,9 +184,27 @@ async function callAdminUsers(payload) {
     result = { error: "Respuesta inesperada del servidor." };
   }
   if (!resp.ok) {
-    throw new Error(result.error || "No se pudo completar la operación.");
+    const err = new Error(result.error || "No se pudo completar la operación.");
+    if (result.duplicado) err.duplicado = result.duplicado;
+    throw err;
   }
   return result;
+}
+
+function renderDuplicadoBanner(mensaje, d) {
+  return `
+    <div class="banner banner-error">
+      <strong>Datos ya registrados</strong><br>
+      ${escapeHtml(mensaje)}
+      <div style="margin-top:8px; font-size:12.5px; line-height:1.6;">
+        Nombre: ${escapeHtml(d.nombre_completo || "—")}<br>
+        Domicilio: ${escapeHtml(d.domicilio || "—")}<br>
+        Teléfono: ${escapeHtml(d.telefono || "—")}<br>
+        Ocupación: ${escapeHtml(TIPO_OCUPACION_LABEL[d.tipo_ocupacion] || d.tipo_ocupacion || "—")}<br>
+        Rol: ${escapeHtml(d.rol === "comite" ? "Comité" : "Residente")}
+        ${d.estatus_acceso === "suspendido" ? '<br>Estatus de acceso: <span class="pill pill-suspendido">Suspendido</span>' : ""}
+      </div>
+    </div>`;
 }
 
 async function renderPadron() {
@@ -333,7 +351,9 @@ async function renderPadron() {
       banner.innerHTML = '<div class="banner banner-ok">Residente creado. Ya puede iniciar sesión con el correo y la contraseña que pusiste.</div>';
       renderPadron();
     } catch (err) {
-      banner.innerHTML = `<div class="banner banner-error">No se pudo crear: ${escapeHtml(err.message)}</div>`;
+      banner.innerHTML = err.duplicado
+        ? renderDuplicadoBanner(err.message, err.duplicado)
+        : `<div class="banner banner-error">No se pudo crear: ${escapeHtml(err.message)}</div>`;
       submitBtn.disabled = false;
     }
   });
