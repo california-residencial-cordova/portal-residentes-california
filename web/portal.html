@@ -184,6 +184,7 @@
     padding: 18px; background: #fff; border: 1px solid var(--border);
     border-top: 2px solid var(--accent); border-radius: 12px;
     text-align: left; font-family: inherit; cursor: pointer; width: 100%;
+    text-decoration: none; color: inherit;
   }
   .pv-card .date { font-family: 'SF Mono', 'Menlo', 'Consolas', monospace; font-size: 11px; letter-spacing: 1px; color: var(--muted); font-weight: 600; }
   .pv-card h3 { margin: 0; font-size: 15.5px; }
@@ -191,6 +192,11 @@
 
   .pv-card.pv-card-news { padding: 0; gap: 0; overflow: hidden; border-top: 1px solid var(--border); }
   .pv-card-img { width: 100%; height: 128px; object-fit: cover; display: block; }
+  .pv-card-logo-wrap {
+    width: 100%; height: 128px; display: flex; align-items: center; justify-content: center;
+    padding: 14px; background: #fff; border-bottom: 1px solid var(--border); box-sizing: border-box;
+  }
+  .pv-card-logo-wrap img { max-width: 100%; max-height: 100%; object-fit: contain; }
   .pv-card-body { display: flex; flex-direction: column; gap: 8px; padding: 16px 18px 18px 18px; }
   .pv-card-readmore {
     align-self: flex-end; margin-top: 2px; background: #ECECEC; color: var(--ink-soft);
@@ -457,10 +463,48 @@
     <section class="pv-section" id="enlaces">
       <div class="pv-section-head"><span class="dot"></span><h2>Enlaces de interés</h2></div>
       <div class="pv-grid-3">
-        <a href="https://www.hermosillo.gob.mx/" target="_blank" rel="noopener" class="pv-link-card">Ayuntamiento de Hermosillo</a>
-        <a href="https://app.cfe.mx/Aplicaciones/CCFE/MiEspacio/AvisoVUN.aspx" target="_blank" rel="noopener" class="pv-link-card">CFE — reportar fallas</a>
-        <a href="https://www.hermosillo.gob.mx/entidades/seguridad-publica/" target="_blank" rel="noopener" class="pv-link-card">Seguridad pública — [TELÉFONO]</a>
-        <a href="https://www.hermosillo.gob.mx/pages/mapa-recoleccion-basura.aspx" target="_blank" rel="noopener" class="pv-link-card">Mapa de recolección de basura</a>
+        <a href="https://www.hermosillo.gob.mx/" target="_blank" rel="noopener" class="pv-card pv-card-news">
+          <div class="pv-card-logo-wrap"><img src="img/enlace-ayuntamiento.png" alt="H. Ayuntamiento de Hermosillo"></div>
+          <div class="pv-card-body">
+            <h3>Ayuntamiento de Hermosillo</h3>
+            <span class="pv-card-readmore">Visitar sitio</span>
+          </div>
+        </a>
+        <a href="https://app.cfe.mx/Aplicaciones/CCFE/MiEspacio/AvisoVUN.aspx" target="_blank" rel="noopener" class="pv-card pv-card-news">
+          <div class="pv-card-logo-wrap"><img src="img/enlace-cfe.png" alt="CFE"></div>
+          <div class="pv-card-body">
+            <h3>CFE — reportar fallas</h3>
+            <span class="pv-card-readmore">Visitar sitio</span>
+          </div>
+        </a>
+        <a href="https://www.hermosillo.gob.mx/entidades/seguridad-publica/" target="_blank" rel="noopener" class="pv-card pv-card-news">
+          <div class="pv-card-logo-wrap"><img src="img/enlace-seguridad.png" alt="Policía Municipal Hermosillo"></div>
+          <div class="pv-card-body">
+            <h3>Seguridad pública — [TELÉFONO]</h3>
+            <span class="pv-card-readmore">Visitar sitio</span>
+          </div>
+        </a>
+        <a href="https://www.hermosillo.gob.mx/pages/mapa-recoleccion-basura.aspx" target="_blank" rel="noopener" class="pv-card pv-card-news">
+          <div class="pv-card-logo-wrap"><img src="img/enlace-basura.png" alt="Recolector de basura"></div>
+          <div class="pv-card-body">
+            <h3>Mapa de recolección de basura</h3>
+            <span class="pv-card-readmore">Visitar sitio</span>
+          </div>
+        </a>
+        <a href="https://presupuestocreces.hermosillo.gob.mx/" target="_blank" rel="noopener" class="pv-card pv-card-news">
+          <div class="pv-card-logo-wrap"><img src="img/enlace-creces.png" alt="Creces"></div>
+          <div class="pv-card-body">
+            <h3>Creces — presupuesto participativo</h3>
+            <span class="pv-card-readmore">Visitar sitio</span>
+          </div>
+        </a>
+        <a href="https://aguadehermosillo.gob.mx/aguah/" target="_blank" rel="noopener" class="pv-card pv-card-news">
+          <div class="pv-card-logo-wrap"><img src="img/enlace-agua.png" alt="Agua de Hermosillo"></div>
+          <div class="pv-card-body">
+            <h3>Agua de Hermosillo</h3>
+            <span class="pv-card-readmore">Visitar sitio</span>
+          </div>
+        </a>
       </div>
     </section>
 
