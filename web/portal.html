@@ -8,11 +8,17 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
   .pv-nav {
+    position: sticky;
+    top: 66px;
+    z-index: 9;
     display: flex;
     align-items: center;
     gap: 18px;
     overflow-x: auto;
-    padding: 0 24px 14px 24px;
+    padding: 10px 24px 14px 24px;
+    background: rgba(246,244,239,0.95);
+    backdrop-filter: blur(6px);
+    border-bottom: 1px solid var(--border);
   }
   .pv-nav a {
     color: var(--ink-soft);
@@ -75,19 +81,19 @@
     max-width: 520px;
   }
 
-  /* Carrusel de avisos — va debajo del encabezado y arriba de Noticias */
+  /* Carrusel de avisos — va debajo del encabezado y arriba de Noticias,
+     como una franja de ancho completo (igual que el encabezado) */
   .pv-carousel-wrap {
-    max-width: 980px;
-    margin: 28px auto 0 auto;
-    padding: 0 24px;
+    width: 100%;
+    margin: 0;
+    padding: 0;
   }
   .pv-carousel {
     position: relative;
     width: 100%;
     height: clamp(220px, 28vw, 380px);
     overflow: hidden;
-    border-radius: 12px;
-    background: #14110D;
+    background: radial-gradient(ellipse at center, #8a5a3a 0%, #6b4226 45%, #4a2f1d 75%, #341f13 100%);
   }
   .pv-carousel-slide {
     position: absolute;
@@ -410,6 +416,7 @@
         <a href="https://www.hermosillo.gob.mx/" target="_blank" rel="noopener" class="pv-link-card">Ayuntamiento de Hermosillo</a>
         <a href="https://app.cfe.mx/Aplicaciones/CCFE/MiEspacio/AvisoVUN.aspx" target="_blank" rel="noopener" class="pv-link-card">CFE — reportar fallas</a>
         <a href="https://www.hermosillo.gob.mx/entidades/seguridad-publica/" target="_blank" rel="noopener" class="pv-link-card">Seguridad pública — [TELÉFONO]</a>
+        <a href="https://www.hermosillo.gob.mx/pages/mapa-recoleccion-basura.aspx" target="_blank" rel="noopener" class="pv-link-card">Mapa de recolección de basura</a>
       </div>
     </section>
 
