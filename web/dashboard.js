@@ -462,7 +462,7 @@ async function renderPadron() {
 // ============================================================
 // Tab: Lotes y casas vacías (solo comité)
 // ============================================================
-// Lleva el registro de TODOS los domicilios de la colonia, tengan
+// Lleva el registro de TODOS los domicilios del Residencial, tengan
 // o no un residente con cuenta — útil para saber cuántas casas
 // están vacías. Los residentes ven esta información (solo lectura)
 // en el Portal Vecinal.
@@ -513,7 +513,7 @@ async function renderLotes() {
 
     <div class="card">
       <h2>Agregar lote</h2>
-      <p class="hint">Registra cada domicilio de la colonia, tenga o no un residente con cuenta. Así se puede saber cuántas casas están vacías.</p>
+      <p class="hint">Registra cada domicilio del Residencial, tenga o no un residente con cuenta. Así se puede saber cuántas casas están vacías.</p>
       <div id="loteBanner"></div>
       <form id="altaLoteForm">
         <div class="form-row">
@@ -536,7 +536,7 @@ async function renderLotes() {
     </div>
 
     <div class="card">
-      <h2>Lotes de la colonia</h2>
+      <h2>Lotes del Residencial</h2>
       <p class="hint">Esta lista es la que ven los residentes (solo lectura) en el Portal Vecinal. Cambia el estatus o las notas directo aquí para actualizarlas al instante.</p>
       <div id="lotesBanner"></div>
       <table>
