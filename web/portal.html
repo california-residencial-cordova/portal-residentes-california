@@ -189,6 +189,16 @@
   .pv-card h3 { margin: 0; font-size: 15.5px; }
   .pv-card p { margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--ink-soft); }
 
+  .pv-card.pv-card-news { padding: 0; gap: 0; overflow: hidden; border-top: 1px solid var(--border); }
+  .pv-card-img { width: 100%; height: 128px; object-fit: cover; display: block; }
+  .pv-card-body { display: flex; flex-direction: column; gap: 8px; padding: 16px 18px 18px 18px; }
+  .pv-card-readmore {
+    align-self: flex-end; margin-top: 2px; background: #ECECEC; color: var(--ink-soft);
+    font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: 7px;
+    transition: background .15s ease, color .15s ease;
+  }
+  .pv-card-news:hover .pv-card-readmore { background: var(--accent); color: #fff; }
+
   .pv-link-row {
     display: flex; align-items: center; justify-content: space-between; gap: 12px;
     padding: 14px 20px; border-bottom: 1px solid #F0ECE1;
@@ -246,6 +256,8 @@
   #newsModalDate { font-family: 'SF Mono', 'Menlo', 'Consolas', monospace; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); font-weight: 600; }
   #newsModalTitle { margin: 8px 0 12px 0; font-size: 20px; line-height: 1.25; }
   #newsModalBody { margin: 0; font-size: 14px; line-height: 1.6; color: var(--ink-soft); white-space: pre-line; }
+  #newsModalLink { display: inline-block; margin-top: 16px; font-size: 13.5px; font-weight: 700; color: var(--accent-dark); text-decoration: none; }
+  #newsModalLink:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
@@ -306,25 +318,41 @@
       <div class="pv-section-head"><span class="dot"></span><h2>Noticias y avisos</h2></div>
 
       <div class="pv-grid-3">
-        <a href="img/volante-asamblea.jpg" target="_blank" rel="noopener" class="pv-card" style="text-decoration:none;">
-          <span class="date">16 de octubre de 2026</span>
-          <h3>Asamblea General Extraordinaria</h3>
-          <p>Convocamos a todos los residentes de Cerrada Córdoba a la Asamblea General Extraordinaria, para presentar al equipo que se postula como nuevo comité vecinal, el acta constitutiva y el reglamento interno. Tu participación es clave para darle formalidad oficial al comité.</p>
-        </a>
-        <button type="button" class="pv-card" onclick="openNews('reciclaje')">
-          <span class="date">[FECHA]</span>
-          <h3>Se retoma la recolección de reciclaje</h3>
-          <p>A partir de este mes vuelve el contenedor de reciclaje en la entrada. Coloca cartón y plástico separados los martes por la noche.</p>
+        <button type="button" class="pv-card pv-card-news" onclick="openNews('asamblea')">
+          <img class="pv-card-img" src="img/noticia-asamblea.svg" alt="">
+          <div class="pv-card-body">
+            <span class="date">16 de octubre de 2026</span>
+            <h3>Asamblea General Extraordinaria</h3>
+            <p>Convocamos a todos los residentes de Cerrada Córdoba a la Asamblea General Extraordinaria, para presentar al equipo que se postula como nuevo comité vecinal, el acta constitutiva y el reglamento interno.</p>
+            <span class="pv-card-readmore">Leer más</span>
+          </div>
         </button>
-        <button type="button" class="pv-card" onclick="openNews('porton')">
-          <span class="date">[FECHA]</span>
-          <h3>Mantenimiento al portón principal</h3>
-          <p>El motor del acceso vehicular estará en revisión. Durante esos días el acceso será manual, por favor ten paciencia.</p>
+        <button type="button" class="pv-card pv-card-news" onclick="openNews('reciclaje')">
+          <img class="pv-card-img" src="img/noticia-reciclaje.svg" alt="">
+          <div class="pv-card-body">
+            <span class="date">[FECHA]</span>
+            <h3>Se retoma la recolección de reciclaje</h3>
+            <p>A partir de este mes vuelve el contenedor de reciclaje en la entrada. Coloca cartón y plástico separados los martes por la noche.</p>
+            <span class="pv-card-readmore">Leer más</span>
+          </div>
         </button>
-        <button type="button" class="pv-card" onclick="openNews('comite')">
-          <span class="date">7 de octubre de 2026</span>
-          <h3>Nuevo comité vecinal en marcha</h3>
-          <p>Gracias a todos los que se sumaron en la primera reunión. Aquí iremos publicando los avances y próximos pasos.</p>
+        <button type="button" class="pv-card pv-card-news" onclick="openNews('porton')">
+          <img class="pv-card-img" src="img/noticia-porton.svg" alt="">
+          <div class="pv-card-body">
+            <span class="date">[FECHA]</span>
+            <h3>Mantenimiento al portón principal</h3>
+            <p>El motor del acceso vehicular estará en revisión. Durante esos días el acceso será manual, por favor ten paciencia.</p>
+            <span class="pv-card-readmore">Leer más</span>
+          </div>
+        </button>
+        <button type="button" class="pv-card pv-card-news" onclick="openNews('comite')">
+          <img class="pv-card-img" src="img/noticia-comite.svg" alt="">
+          <div class="pv-card-body">
+            <span class="date">7 de octubre de 2026</span>
+            <h3>Nuevo comité vecinal en marcha</h3>
+            <p>Gracias a todos los que se sumaron en la primera reunión. Aquí iremos publicando los avances y próximos pasos.</p>
+            <span class="pv-card-readmore">Leer más</span>
+          </div>
         </button>
       </div>
     </section>
@@ -461,6 +489,7 @@
       <span id="newsModalDate"></span>
       <h3 id="newsModalTitle"></h3>
       <p id="newsModalBody"></p>
+      <a id="newsModalLink" href="#" target="_blank" rel="noopener" style="display:none;">Ver volante completo →</a>
     </div>
   </div>
 
@@ -518,6 +547,13 @@
     })();
 
     var newsData = {
+      asamblea: {
+        date: '16 de octubre de 2026',
+        title: 'Asamblea General Extraordinaria',
+        body: 'Convocamos a todos los residentes de Cerrada Córdoba a la Asamblea General Extraordinaria, para presentar al equipo que se postula como nuevo comité vecinal, el acta constitutiva y el reglamento interno. Tu participación es clave para darle formalidad oficial al comité.',
+        link: 'img/volante-asamblea.jpg',
+        linkText: 'Ver volante completo →'
+      },
       comite: {
         date: '7 de octubre de 2026',
         title: 'Nuevo comité vecinal en marcha',
@@ -540,6 +576,14 @@
       document.getElementById('newsModalDate').textContent = item.date;
       document.getElementById('newsModalTitle').textContent = item.title;
       document.getElementById('newsModalBody').textContent = item.body;
+      var linkEl = document.getElementById('newsModalLink');
+      if (item.link) {
+        linkEl.href = item.link;
+        linkEl.textContent = item.linkText || 'Ver más →';
+        linkEl.style.display = 'inline-block';
+      } else {
+        linkEl.style.display = 'none';
+      }
       document.getElementById('newsModalOverlay').style.display = 'flex';
     }
     function closeNews() {
