@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200">
+  <rect width="400" height="200" fill="#B5651F"/>
+  <polygon points="0,200 170,0 400,0 400,50 110,200" fill="#C47230" opacity="0.5"/>
+  <g transform="translate(192,104)">
+    <rect x="-42" y="-36" width="9" height="72" fill="#FFFFFF"/>
+    <rect x="33" y="-36" width="9" height="72" fill="#FFFFFF"/>
+    <rect x="-42" y="-12" width="84" height="7" fill="#FFFFFF"/>
+    <rect x="-42" y="16" width="84" height="7" fill="#FFFFFF"/>
+    <rect x="-4" y="-36" width="7" height="72" fill="#FFFFFF" transform="rotate(22)"/>
+    <g transform="translate(52,-42)">
+      <circle r="18" fill="#B5651F" stroke="#FFFFFF" stroke-width="4"/>
+      <circle r="5" fill="#FFFFFF"/>
+      <g stroke="#FFFFFF" stroke-width="4" stroke-linecap="round">
+        <line x1="0" y1="-14" x2="0" y2="-20"/>
+        <line x1="0" y1="14" x2="0" y2="20"/>
+        <line x1="-14" y1="0" x2="-20" y2="0"/>
+        <line x1="14" y1="0" x2="20" y2="0"/>
+        <line x1="-10" y1="-10" x2="-14" y2="-14"/>
+        <line x1="10" y1="10" x2="14" y2="14"/>
+        <line x1="-10" y1="10" x2="-14" y2="14"/>
+        <line x1="10" y1="-10" x2="14" y2="-14"/>
+      </g>
+    </g>
+  </g>
+</svg>
