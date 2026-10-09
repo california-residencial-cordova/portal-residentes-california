@@ -1,5 +1,6 @@
 let CURRENT_PROFILE = null;
 let CURRENT_TAB = null;
+let CHAT_CHANNEL = null;
 
 function escapeHtml(str) {
   if (str === null || str === undefined) return "";
@@ -50,9 +51,13 @@ function renderTabs() {
         ["padron", "Padrón de residentes"],
         ["lotes", "Lotes y casas vacías"],
         ["visitas", "Control de visitas"],
+        ["chat", "Chat vecinal"],
         ["perfil", "Mi perfil"],
       ]
-    : [["perfil", "Mi perfil"]];
+    : [
+        ["chat", "Chat vecinal"],
+        ["perfil", "Mi perfil"],
+      ];
 
   const tabsHtml =
     '<div class="tabs" id="tabsRow">' +
@@ -80,12 +85,21 @@ function setActiveTabButton(tab) {
 function switchTab(tab) {
   CURRENT_TAB = tab;
   setActiveTabButton(tab);
+
+  // Si veníamos del chat, nos desconectamos de "tiempo real" antes
+  // de salir — si no, se quedaría escuchando mensajes de más.
+  if (CHAT_CHANNEL) {
+    supabaseClient.removeChannel(CHAT_CHANNEL);
+    CHAT_CHANNEL = null;
+  }
+
   const content = document.getElementById("tabContent");
   content.innerHTML = '<div class="loading">Cargando…</div>';
 
   if (tab === "padron") return renderPadron();
   if (tab === "lotes") return renderLotes();
   if (tab === "visitas") return renderVisitasComite();
+  if (tab === "chat") return renderChat();
   if (tab === "perfil") return renderPerfil();
 }
 
@@ -313,7 +327,10 @@ async function renderPadron() {
             </select>
           </div>
         </div>
-        <button type="submit" class="btn btn-primary">Crear residente</button>
+        <div style="display:flex; gap:10px;">
+          <button type="submit" class="btn btn-primary">Crear residente</button>
+          <button type="button" id="limpiarAltaBtn" class="btn btn-secondary">Limpiar</button>
+        </div>
       </form>
     </div>
 
@@ -356,6 +373,11 @@ async function renderPadron() {
         : `<div class="banner banner-error">No se pudo crear: ${escapeHtml(err.message)}</div>`;
       submitBtn.disabled = false;
     }
+  });
+
+  document.getElementById("limpiarAltaBtn").addEventListener("click", () => {
+    document.getElementById("altaResidenteForm").reset();
+    document.getElementById("altaBanner").innerHTML = "";
   });
 
   content.querySelectorAll("select[data-field]").forEach((sel) => {
@@ -673,6 +695,115 @@ async function renderVisitasComite() {
     }
     renderVisitasComite();
   });
+}
+
+// ============================================================
+// Tab: Chat vecinal (todo residente con cuenta, comité incluido)
+// ============================================================
+// Un solo muro de mensajes en tiempo real (Supabase Realtime).
+// El autor (nombre y domicilio) lo fija el servidor con un
+// trigger, así que lo que se ve aquí es siempre confiable.
+// ============================================================
+function renderChatMessageEl(m) {
+  const mine = m.autor_id === CURRENT_PROFILE.id;
+  const puedeBorrar = mine || CURRENT_PROFILE.rol === "comite";
+  const div = document.createElement("div");
+  div.className = "chat-msg" + (mine ? " chat-msg-mine" : "");
+  div.setAttribute("data-msg-id", m.id);
+  div.innerHTML = `
+    <div class="chat-msg-head">
+      <span class="chat-msg-autor">${escapeHtml(m.autor_nombre)}${m.autor_domicilio ? " · " + escapeHtml(m.autor_domicilio) : ""}</span>
+      <span class="chat-msg-hora">${formatDateTime(m.creado_en)}</span>
+    </div>
+    <div class="chat-msg-body"></div>
+    ${puedeBorrar ? `<button type="button" class="chat-msg-del" data-del-msg="${m.id}" aria-label="Borrar mensaje">×</button>` : ""}
+  `;
+  // El contenido se asigna como texto (no HTML) para que nada de lo
+  // que alguien escriba pueda ejecutarse como código en la página.
+  div.querySelector(".chat-msg-body").textContent = m.contenido;
+  return div;
+}
+
+async function renderChat() {
+  const content = document.getElementById("tabContent");
+
+  const { data: mensajes, error } = await supabaseClient
+    .from("mensajes_chat")
+    .select("*")
+    .order("creado_en", { ascending: true })
+    .limit(200);
+
+  if (error) {
+    content.innerHTML = `<div class="banner banner-error">No se pudo cargar el chat: ${escapeHtml(error.message)}</div>`;
+    return;
+  }
+
+  content.innerHTML = `
+    <div class="card">
+      <h2>Chat vecinal</h2>
+      <p class="hint">Mensajes entre todos los residentes con cuenta, en tiempo real. Este chat es visible para todos — sé respetuoso.</p>
+      <div id="chatBanner"></div>
+      <div id="chatMessages" class="chat-messages"></div>
+      <form id="chatForm" class="chat-form">
+        <input type="text" id="chatInput" placeholder="Escribe un mensaje…" maxlength="1000" required autocomplete="off">
+        <button type="submit" class="btn btn-primary">Enviar</button>
+      </form>
+    </div>
+  `;
+
+  const messagesEl = document.getElementById("chatMessages");
+
+  if (mensajes.length === 0) {
+    messagesEl.innerHTML = '<div class="empty-state">Todavía no hay mensajes. ¡Sé el primero en escribir!</div>';
+  } else {
+    mensajes.forEach((m) => messagesEl.appendChild(renderChatMessageEl(m)));
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  messagesEl.addEventListener("click", async (e) => {
+    const btn = e.target.closest("[data-del-msg]");
+    if (!btn) return;
+    if (!confirm("¿Borrar este mensaje?")) return;
+    const id = btn.getAttribute("data-del-msg");
+    const { error: delErr } = await supabaseClient.from("mensajes_chat").delete().eq("id", id);
+    if (delErr) {
+      document.getElementById("chatBanner").innerHTML = `<div class="banner banner-error">No se pudo borrar: ${escapeHtml(delErr.message)}</div>`;
+    }
+  });
+
+  document.getElementById("chatForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const input = document.getElementById("chatInput");
+    const texto = input.value.trim();
+    if (!texto) return;
+    input.disabled = true;
+    const { error: insErr } = await supabaseClient.from("mensajes_chat").insert({ contenido: texto });
+    input.disabled = false;
+    if (insErr) {
+      document.getElementById("chatBanner").innerHTML = `<div class="banner banner-error">No se pudo enviar: ${escapeHtml(insErr.message)}</div>`;
+      return;
+    }
+    input.value = "";
+    input.focus();
+  });
+
+  // Tiempo real: cualquier mensaje nuevo o borrado (de cualquier
+  // residente) aparece o desaparece solo, sin recargar la página.
+  CHAT_CHANNEL = supabaseClient
+    .channel("mensajes_chat_cambios")
+    .on("postgres_changes", { event: "INSERT", schema: "public", table: "mensajes_chat" }, (payload) => {
+      if (document.getElementById("chatMessages") !== messagesEl) return;
+      const vacio = messagesEl.querySelector(".empty-state");
+      if (vacio) vacio.remove();
+      messagesEl.appendChild(renderChatMessageEl(payload.new));
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    })
+    .on("postgres_changes", { event: "DELETE", schema: "public", table: "mensajes_chat" }, (payload) => {
+      if (document.getElementById("chatMessages") !== messagesEl) return;
+      const el = messagesEl.querySelector(`[data-msg-id="${payload.old.id}"]`);
+      if (el) el.remove();
+    })
+    .subscribe();
 }
 
 // ============================================================
