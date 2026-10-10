@@ -1,0 +1,759 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Portal Vecinal — California Residencial</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&family=Kaushan+Script&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+  :root {
+    --font-display: 'Fraunces', Georgia, serif;
+    --font-body: 'Inter', -apple-system, 'Segoe UI', Helvetica, sans-serif;
+    --shadow-sm: 0 1px 2px rgba(28,22,15,0.05), 0 1px 1px rgba(28,22,15,0.04);
+    --shadow-md: 0 8px 24px rgba(28,22,15,0.08), 0 2px 6px rgba(28,22,15,0.05);
+    --shadow-lg: 0 20px 48px rgba(28,22,15,0.14), 0 6px 16px rgba(28,22,15,0.07);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+  }
+  body { font-family: var(--font-body); }
+  h1, h2, h3, .pv-hero-text p.lead { font-family: var(--font-display); }
+  .pv-nav {
+    position: sticky;
+    top: 66px;
+    z-index: 9;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    overflow-x: auto;
+    padding: 10px 24px 14px 24px;
+    background: rgba(246,244,239,0.95);
+    backdrop-filter: blur(6px);
+    border-bottom: 1px solid var(--border);
+  }
+  .pv-nav a {
+    color: var(--ink-soft);
+    font-size: 13.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    padding: 4px 2px;
+    border-bottom: 2px solid transparent;
+    text-decoration: none;
+  }
+  .pv-nav a:hover { color: var(--ink); border-bottom: 2px solid var(--accent); }
+  .pv-nav a.is-active { color: var(--ink); border-bottom: 2px solid var(--accent); }
+
+  .pv-hero {
+    position: relative;
+    width: 100%;
+    height: clamp(320px, 38vw, 500px);
+    overflow: hidden;
+  }
+  .pv-hero img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 55%;
+    transform: scale(1.03);
+  }
+  .pv-hero::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(20,16,12,0.08) 0%, rgba(18,15,11,0.18) 45%, rgba(14,11,8,0.72) 100%);
+  }
+  .pv-hero-text {
+    position: relative;
+    z-index: 2;
+    height: 100%;
+    padding: 0 28px 34px 28px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-end;
+  }
+  .pv-hero-text .inner {
+    max-width: 620px;
+    text-align: left;
+  }
+  .pv-hero-text span.kicker {
+    font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+    font-size: 12px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #F2D9C4;
+    font-weight: 600;
+  }
+  .pv-hero-text h1 {
+    margin: 10px 0 0 0;
+    font-size: clamp(1.9rem, 2.1rem + 2vw, 3.4rem);
+    line-height: 1.08;
+    font-weight: 600;
+    color: #FFFFFF;
+    letter-spacing: -0.01em;
+  }
+  .pv-hero-text p.lead {
+    margin: 14px 0 0 0;
+    font-size: clamp(14.5px, 0.9rem + 0.3vw, 17px);
+    line-height: 1.55;
+    color: #EDEAE0;
+    max-width: 480px;
+    font-weight: 500;
+  }
+
+  /* Carrusel de avisos — va debajo del encabezado y arriba de Noticias,
+     como una franja de ancho completo (igual que el encabezado) */
+  .pv-carousel-wrap {
+    width: 100%;
+    margin: 26px 0 0 0;
+    padding: 0;
+  }
+  .pv-carousel {
+    position: relative;
+    width: 100%;
+    height: clamp(220px, 28vw, 380px);
+    overflow: hidden;
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .pv-carousel-slide {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+    display: block;
+  }
+  .pv-carousel-slide.is-active {
+    opacity: 1;
+    z-index: 1;
+  }
+  /* Fondo: la misma imagen, difuminada y atenuada, para que el
+     degradado detrás siempre combine con los colores de cada imagen */
+  .pv-carousel-bg {
+    position: absolute;
+    inset: -30px;
+    background-size: cover;
+    background-position: center;
+    filter: blur(38px) saturate(1.15) brightness(0.78);
+    transform: scale(1.08);
+  }
+  .pv-carousel-slide img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+    z-index: 1;
+    filter: drop-shadow(0 12px 28px rgba(20,16,12,0.35));
+  }
+  .pv-carousel-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 3;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(20,17,13,0.45);
+    color: #fff;
+    font-size: 19px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .pv-carousel-arrow:hover { background: rgba(20,17,13,0.68); }
+  .pv-carousel-arrow-prev { left: 12px; }
+  .pv-carousel-arrow-next { right: 12px; }
+  .pv-carousel-dots {
+    position: absolute;
+    bottom: 14px;
+    right: 18px;
+    z-index: 3;
+    display: flex;
+    gap: 7px;
+  }
+  .pv-carousel-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: none;
+    padding: 0;
+    background: rgba(255,255,255,0.45);
+    cursor: pointer;
+  }
+  .pv-carousel-dot.is-active { background: #fff; }
+
+  .pv-section { padding: 56px 24px 8px 24px; max-width: 980px; margin: 0 auto; }
+  .pv-section-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 22px; }
+  .pv-section-head .dot { width: 9px; height: 9px; background: var(--accent); border-radius: 50%; display: inline-block; flex-shrink: 0; transform: translateY(-2px); }
+  .pv-section-head h2 { margin: 0; font-size: clamp(20px, 1.1rem + 0.6vw, 26px); font-weight: 600; letter-spacing: -0.01em; text-transform: none; }
+
+  /* Layout de dos columnas: menú vertical fijo + contenido.
+     El menú ya NO se centra junto con el contenido — se ancla cerca del
+     borde izquierdo real de la ventana, y el contenido se centra aparte
+     dentro del espacio restante, para que no quede un hueco grande a su
+     izquierda en pantallas anchas. */
+  .pv-layout { display: flex; align-items: flex-start; gap: 18px; width: 100%; padding: 0 0 0 18px; }
+  .pv-sidebar {
+    flex: 0 0 460px;
+    position: sticky;
+    top: 82px;
+    align-self: flex-start;
+    padding: 56px 0 44px 0;
+    background: linear-gradient(165deg, #FFFFFF 0%, #FBF3EA 55%, #F7EAD9 100%);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: var(--shadow-sm);
+  }
+  .pv-sidebar .menu-title {
+    display: flex; align-items: baseline; gap: 12px;
+    margin: 0 20px 22px 20px;
+    font-family: var(--font-display);
+    font-size: clamp(18px, 1rem + 0.4vw, 22px);
+    font-weight: 600; letter-spacing: -0.01em; color: var(--ink);
+  }
+  .pv-sidebar .menu-title .dot { width: 9px; height: 9px; background: var(--accent); border-radius: 50%; display: inline-block; flex-shrink: 0; transform: translateY(-2px); }
+  .pv-sidebar nav { display: flex; flex-direction: column; gap: 0; }
+  .pv-sidebar a {
+    position: relative;
+    display: flex; align-items: center; gap: 16px;
+    padding: 17px 20px; border-radius: 10px;
+    font-family: var(--font-display);
+    font-size: 18.5px; font-weight: 600; color: var(--ink-soft);
+    text-decoration: none; transition: background .15s ease, color .15s ease;
+  }
+  .pv-sidebar nav a:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    left: 52px;
+    right: 14px;
+    bottom: 0;
+    height: 1px;
+    background: rgba(28,22,15,0.1);
+  }
+  .pv-sidebar a svg { flex-shrink: 0; width: 25px; height: 25px; opacity: .75; transition: opacity .15s ease; }
+  .pv-sidebar a:hover { background: #FBF0E8; color: var(--accent-dark); }
+  .pv-sidebar a:hover svg { opacity: 1; }
+  .pv-sidebar a.is-active { background: var(--accent); color: #fff; }
+  .pv-sidebar a.is-active svg { opacity: 1; }
+  .pv-main { flex: 1; min-width: 0; max-width: 980px; margin: 0 auto; padding: 0 24px 0 0; }
+  .pv-main .pv-section { max-width: none; margin: 0; padding-left: 0; padding-right: 0; }
+  @media (max-width: 900px) {
+    .pv-layout { flex-direction: column; padding: 0; gap: 0; }
+    .pv-sidebar {
+      position: static; width: 100%; padding: 14px 10px; margin: 0;
+      overflow-x: auto; border-radius: 0; border: none; box-shadow: none;
+      border-bottom: 1px solid var(--border);
+      background: rgba(246,244,239,0.95);
+    }
+    .pv-sidebar .menu-title { display: none; }
+    .pv-sidebar nav { flex-direction: row; gap: 6px; }
+    .pv-sidebar nav a::after { display: none; }
+    .pv-sidebar a { white-space: nowrap; padding: 8px 12px; }
+    .pv-main { max-width: none; padding: 0; }
+    .pv-main .pv-section { padding-left: 24px; padding-right: 24px; }
+  }
+
+  .pv-grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px; }
+  .pv-grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 16px; }
+  @media (max-width: 820px) {
+    .pv-grid-3, .pv-grid-2 { grid-template-columns: 1fr; }
+  }
+
+  .pv-card {
+    display: flex; flex-direction: column; gap: 8px;
+    padding: 18px; background: #fff; border: 1px solid var(--border);
+    border-top: 2px solid var(--accent); border-radius: 14px;
+    text-align: left; font-family: inherit; cursor: pointer; width: 100%;
+    text-decoration: none; color: inherit;
+    box-shadow: var(--shadow-sm);
+    transition: transform .22s cubic-bezier(.2,.8,.2,1), box-shadow .22s ease, border-color .22s ease;
+  }
+  .pv-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+  .pv-card .date { font-family: 'SF Mono', 'Menlo', 'Consolas', monospace; font-size: 11px; letter-spacing: 1px; color: var(--muted); font-weight: 600; }
+  .pv-card h3 { margin: 0; font-size: 16.5px; font-weight: 600; }
+  .pv-card p { margin: 0; font-size: 13.5px; line-height: 1.55; color: var(--ink-soft); }
+
+  .pv-card.pv-card-news { padding: 0; gap: 0; overflow: hidden; border-top: 1px solid var(--border); }
+  .pv-card-img { width: 100%; height: 128px; object-fit: cover; display: block; transition: transform .35s ease; }
+  .pv-card-news:hover .pv-card-img { transform: scale(1.04); }
+  .pv-card-logo-wrap {
+    width: 100%; height: 128px; display: flex; align-items: center; justify-content: center;
+    padding: 14px; background: #fff; border-bottom: 1px solid var(--border); box-sizing: border-box;
+  }
+  .pv-card-logo-wrap img { max-width: 100%; max-height: 100%; object-fit: contain; }
+  .pv-card-body { display: flex; flex-direction: column; gap: 8px; padding: 16px 18px 18px 18px; }
+  .pv-card-readmore {
+    align-self: flex-end; margin-top: 2px; background: #ECECEC; color: var(--ink-soft);
+    font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: 20px;
+    transition: background .15s ease, color .15s ease;
+  }
+  .pv-card-news:hover .pv-card-readmore { background: var(--accent); color: #fff; }
+
+  .pv-link-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 14px 20px; border-bottom: 1px solid #F0ECE1;
+  }
+  .pv-link-row:last-child { border-bottom: none; }
+  .pv-link-row .name { font-size: 14px; font-weight: 600; }
+  .pv-link-row .sub { font-size: 12.5px; color: var(--muted); display: block; }
+  .pv-link-row .links { display: flex; gap: 14px; white-space: nowrap; }
+  .pv-link-row .links a { font-size: 13px; color: var(--warn); font-weight: 600; text-decoration: none; }
+  .pv-link-row .links a:hover { text-decoration: underline; }
+  .pv-link-row .links span.placeholder { font-size: 13px; color: var(--muted); }
+
+  .pv-box { background: #fff; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; margin-bottom: 20px; box-shadow: var(--shadow-sm); }
+
+  .pv-agenda { display: flex; flex-direction: column; gap: 18px; padding: 22px 24px; background: #fff; border: 1px solid var(--border); border-top: 2px solid var(--accent); border-radius: 14px; margin-bottom: 20px; box-shadow: var(--shadow-sm); }
+  .pv-agenda .label { font-family: 'SF Mono', 'Menlo', 'Consolas', monospace; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--warn); font-weight: 700; }
+  .pv-agenda .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .pv-agenda .meta-grid .k { font-family: 'SF Mono', 'Menlo', 'Consolas', monospace; font-size: 10.5px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); font-weight: 600; display: block; }
+  .pv-agenda .meta-grid .v { font-size: 15px; font-weight: 700; }
+  .pv-agenda ol { list-style: none; margin: 0; padding: 0; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; counter-reset: item; }
+  .pv-agenda ol li { display: flex; align-items: center; gap: 14px; padding: 10px 16px; border-bottom: 1px solid #F0ECE1; font-size: 13.5px; }
+  .pv-agenda ol li:last-child { border-bottom: none; }
+  .pv-agenda ol li .n { font-family: 'SF Mono', 'Menlo', 'Consolas', monospace; font-size: 13px; color: var(--warn); font-weight: 700; width: 18px; flex-shrink: 0; }
+
+  .pv-link-card {
+    display: flex; align-items: center; gap: 12px; padding: 14px 16px;
+    background: #fff; border: 1px solid var(--border); border-radius: 10px;
+    text-decoration: none; color: var(--ink); font-size: 14px; font-weight: 600;
+    box-shadow: var(--shadow-sm); transition: transform .2s ease, box-shadow .2s ease;
+  }
+  .pv-link-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+
+  .pv-wa-card {
+    display: flex; align-items: center; justify-content: space-between; gap: 14px;
+    padding: 16px 18px; background: #fff; border: 1px solid var(--border); border-radius: 14px;
+    box-shadow: var(--shadow-sm); transition: transform .2s ease, box-shadow .2s ease;
+  }
+  .pv-wa-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+  .pv-wa-card .t { font-size: 14.5px; font-weight: 700; display: block; }
+  .pv-wa-card .s { font-size: 12.5px; color: var(--muted); display: block; margin-top: 2px; }
+  .pv-wa-btn { background: var(--ok); color: #fff; font-size: 13px; font-weight: 700; padding: 9px 16px; border-radius: 20px; white-space: nowrap; text-decoration: none; transition: background .15s ease; }
+  .pv-wa-btn:hover { background: #238a37; }
+
+  .pv-footer {
+    padding: 36px 24px; text-align: center; font-size: 12.5px; margin-top: 56px;
+    background: linear-gradient(180deg, #1C1713 0%, #14110E 100%); color: #B7AFA2;
+  }
+
+  /* Modal de noticias */
+  .topbar .brand {
+    font-family: 'Kaushan Script', cursive;
+    font-size: clamp(19px, 1.3rem + 0.6vw, 26px);
+    font-weight: 400;
+    color: #B86A3A;
+    letter-spacing: 0;
+    line-height: 1.2;
+  }
+
+  #newsModalOverlay {
+    display: none; position: fixed; inset: 0; background: rgba(20,16,12,0.5);
+    backdrop-filter: blur(3px);
+    z-index: 100; align-items: center; justify-content: center; padding: 24px;
+  }
+  #newsModalBox {
+    background: #fff; border-radius: 18px; max-width: 520px; width: 100%;
+    max-height: 80vh; overflow-y: auto; padding: 30px; position: relative;
+    box-shadow: var(--shadow-lg);
+  }
+  #newsModalClose {
+    position: absolute; top: 14px; right: 14px; width: 30px; height: 30px;
+    border-radius: 8px; border: 1px solid var(--border); background: #fff;
+    color: var(--ink-soft); font-size: 17px; cursor: pointer; font-family: inherit;
+  }
+  #newsModalDate { font-family: 'SF Mono', 'Menlo', 'Consolas', monospace; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  #newsModalTitle { margin: 8px 0 12px 0; font-size: 20px; line-height: 1.25; }
+  #newsModalBody { margin: 0; font-size: 14px; line-height: 1.6; color: var(--ink-soft); white-space: pre-line; }
+  #newsModalLink { display: inline-block; margin-top: 16px; font-size: 13.5px; font-weight: 700; color: var(--accent-dark); text-decoration: none; }
+  #newsModalLink:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <span class="brand">Todo tu Residencial, en un solo lugar.</span>
+    <div class="user-info">
+      <a href="dashboard.html" class="btn btn-secondary" style="text-decoration:none;">← Mi cuenta</a>
+      <button class="btn btn-secondary" id="logoutBtn">Salir</button>
+    </div>
+  </div>
+
+  <div class="pv-hero" id="inicio">
+    <img src="img/hero.jpg" alt="">
+    <div class="pv-hero-text">
+      <div class="inner">
+        <span class="kicker">// California Residencial</span>
+        <p class="lead" style="margin-top:10px;">Noticias, convocatorias, informes, reuniones y todo lo que pasa en el Residencial.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="pv-carousel-wrap">
+    <div class="pv-carousel" id="pvCarousel">
+      <a class="pv-carousel-slide is-active" data-slide="0" href="img/normas-convivencia.jpg" target="_blank" rel="noopener" aria-label="Ver normas de convivencia en tamaño completo">
+        <div class="pv-carousel-bg" style="background-image:url('img/normas-convivencia.jpg');"></div>
+        <img src="img/normas-convivencia.jpg" alt="Normas de convivencia para la Asamblea Extraordinaria">
+      </a>
+      <a class="pv-carousel-slide" data-slide="1" href="img/volante-asamblea.jpg" target="_blank" rel="noopener" aria-label="Ver volante de la Asamblea General Extraordinaria en tamaño completo">
+        <div class="pv-carousel-bg" style="background-image:url('img/volante-asamblea.jpg');"></div>
+        <img src="img/volante-asamblea.jpg" alt="Volante de la Asamblea General Extraordinaria">
+      </a>
+
+      <button type="button" class="pv-carousel-arrow pv-carousel-arrow-prev" id="carouselPrevBtn" aria-label="Imagen anterior">‹</button>
+      <button type="button" class="pv-carousel-arrow pv-carousel-arrow-next" id="carouselNextBtn" aria-label="Imagen siguiente">›</button>
+      <div class="pv-carousel-dots" id="carouselDots">
+        <button type="button" class="pv-carousel-dot is-active" data-dot="0" aria-label="Ir a la imagen 1"></button>
+        <button type="button" class="pv-carousel-dot" data-dot="1" aria-label="Ir a la imagen 2"></button>
+      </div>
+    </div>
+  </div>
+
+  <div id="loadingGate" class="loading">Verificando tu acceso…</div>
+
+  <div id="pvContent" style="display:none;">
+   <div class="pv-layout">
+    <aside class="pv-sidebar">
+      <div class="menu-title"><span class="dot"></span>Menú Principal</div>
+      <nav>
+        <a href="#noticias"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h13a2 2 0 0 1 2 2v11a1 1 0 0 1-1 1H6a2 2 0 0 1-2-2V5Z"/><path d="M4 5H3a1 1 0 0 0-1 1v11a2 2 0 0 0 2 2"/><path d="M8 8h6M8 11h6M8 14h3"/></svg>Noticias</a>
+        <a href="#convocatorias"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10v4a1 1 0 0 0 1 1h2l4 4V5L6 9H4a1 1 0 0 0-1 1Z"/><path d="M14 8a4 4 0 0 1 0 8"/><path d="M17 5a8 8 0 0 1 0 14"/></svg>Convocatorias</a>
+        <a href="#informes"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Informes</a>
+        <a href="#reuniones"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>Reuniones</a>
+        <a href="#enlaces"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 15l6-6"/><path d="M10 6l1-1a4 4 0 0 1 6 6l-1 1"/><path d="M14 18l-1 1a4 4 0 0 1-6-6l1-1"/></svg>Enlaces</a>
+        <a href="#grupos"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.4 8.5 8.5 0 0 1-4-1L3 20l1.1-5.5A8.38 8.38 0 0 1 12.5 3 8.5 8.5 0 0 1 21 11.5Z"/></svg>Grupos</a>
+      </nav>
+    </aside>
+    <div class="pv-main">
+
+    <!-- Noticias -->
+    <section class="pv-section" id="noticias">
+      <div class="pv-section-head"><span class="dot"></span><h2>Noticias y avisos</h2></div>
+
+      <div class="pv-grid-3">
+        <button type="button" class="pv-card pv-card-news" onclick="openNews('asamblea')">
+          <img class="pv-card-img" src="img/noticia-asamblea.svg" alt="">
+          <div class="pv-card-body">
+            <span class="date">16 de octubre de 2026</span>
+            <h3>Asamblea General Extraordinaria</h3>
+            <p>Convocamos a todos los residentes de Cerrada Córdoba a la Asamblea General Extraordinaria, para presentar al equipo que se postula como nuevo comité vecinal, el acta constitutiva y el reglamento interno.</p>
+            <span class="pv-card-readmore">Leer más</span>
+          </div>
+        </button>
+        <button type="button" class="pv-card pv-card-news" onclick="openNews('reciclaje')">
+          <img class="pv-card-img" src="img/noticia-reciclaje.svg" alt="">
+          <div class="pv-card-body">
+            <span class="date">[FECHA]</span>
+            <h3>Se retoma la recolección de reciclaje</h3>
+            <p>A partir de este mes vuelve el contenedor de reciclaje en la entrada. Coloca cartón y plástico separados los martes por la noche.</p>
+            <span class="pv-card-readmore">Leer más</span>
+          </div>
+        </button>
+        <button type="button" class="pv-card pv-card-news" onclick="openNews('porton')">
+          <img class="pv-card-img" src="img/noticia-porton.svg" alt="">
+          <div class="pv-card-body">
+            <span class="date">[FECHA]</span>
+            <h3>Mantenimiento al portón principal</h3>
+            <p>El motor del acceso vehicular estará en revisión. Durante esos días el acceso será manual, por favor ten paciencia.</p>
+            <span class="pv-card-readmore">Leer más</span>
+          </div>
+        </button>
+        <button type="button" class="pv-card pv-card-news" onclick="openNews('comite')">
+          <img class="pv-card-img" src="img/noticia-comite.svg" alt="">
+          <div class="pv-card-body">
+            <span class="date">7 de octubre de 2026</span>
+            <h3>Nuevo comité vecinal en marcha</h3>
+            <p>Gracias a todos los que se sumaron en la primera reunión. Aquí iremos publicando los avances y próximos pasos.</p>
+            <span class="pv-card-readmore">Leer más</span>
+          </div>
+        </button>
+      </div>
+    </section>
+
+    <!-- Convocatorias -->
+    <section class="pv-section" id="convocatorias">
+      <div class="pv-section-head"><span class="dot"></span><h2>Convocatorias</h2></div>
+      <div class="pv-grid-2">
+        <div class="pv-card" style="cursor:default;">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <h3>Se buscan voluntarios para el comité de eventos</h3>
+          </div>
+          <p>Queremos organizar la posada de fin de año. Si te gustaría ayudar con logística o decoración, avísanos en el grupo de WhatsApp.</p>
+          <span class="date">Fecha límite: [FECHA]</span>
+        </div>
+        <div class="pv-card" style="cursor:default;">
+          <h3>Renovación de cuota de mantenimiento [AÑO]</h3>
+          <p>Se convoca a los vecinos a confirmar sus datos de contacto para el padrón oficial del Residencial.</p>
+          <span class="date">Fecha límite: [FECHA]</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Informes administrativos -->
+    <section class="pv-section" id="informes">
+      <div class="pv-section-head"><span class="dot"></span><h2>Informes administrativos</h2></div>
+      <div class="pv-box">
+        <div class="pv-link-row">
+          <div><span class="name">Corte de caja — [MES, AÑO]</span><span class="sub">Ingresos y gastos del fraccionamiento</span></div>
+          <div class="links"><span class="placeholder">[Ver documento]</span></div>
+        </div>
+        <div class="pv-link-row">
+          <div><span class="name">Estado de cuenta — [MES, AÑO]</span><span class="sub">Saldo y movimientos de la cuenta del comité</span></div>
+          <div class="links"><span class="placeholder">[Ver documento]</span></div>
+        </div>
+        <div class="pv-link-row">
+          <div><span class="name">Reporte de mantenimiento — [MES, AÑO]</span><span class="sub">Trabajos realizados en áreas comunes</span></div>
+          <div class="links"><span class="placeholder">[Ver documento]</span></div>
+        </div>
+      </div>
+      <p style="font-size:13px; color:var(--muted); margin-top:-8px;">Los documentos se comparten aquí conforme el comité los publica.</p>
+    </section>
+
+    <!-- Reuniones -->
+    <section class="pv-section" id="reuniones">
+      <div class="pv-section-head"><span class="dot"></span><h2>Reuniones</h2></div>
+
+      <div class="pv-agenda">
+        <span class="label">Próxima reunión — Asamblea General Extraordinaria</span>
+        <div class="meta-grid">
+          <div><span class="k">Fecha y hora</span><span class="v">Viernes 16 de octubre · 8:00 p.m.</span></div>
+          <div><span class="k">Lugar</span><span class="v">Parque principal</span></div>
+        </div>
+        <div>
+          <span class="k" style="display:block; margin-bottom:8px;">Orden del día</span>
+          <ol>
+            <li><span class="n">1</span><span>Bienvenida y registro de asistencia — tomar lista de los vecinos presentes</span></li>
+            <li><span class="n">2</span><span>Presentar a cada integrante de la planilla por nombre y cargo</span></li>
+            <li><span class="n">3</span><span>Explicar brevemente cómo y para qué se formó el comité</span></li>
+            <li><span class="n">4</span><span>Leer el acta constitutiva en voz alta</span></li>
+            <li><span class="n">5</span><span>Presentar el reglamento interno propuesto</span></li>
+            <li><span class="n">6</span><span>Votación/ratificación — los vecinos presentes levantan la mano para reconocer formalmente al comité</span></li>
+            <li><span class="n">7</span><span>Firma del acta — al menos los integrantes del comité y un par de vecinos como testigos</span></li>
+            <li><span class="n">8</span><span>Mencionar los próximos pasos (ej. publicar la minuta en el portal, próxima reunión)</span></li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="pv-box">
+        <div class="pv-link-row">
+          <span class="name">Acta constitutiva del comité</span>
+          <div class="links">
+            <a href="docs/acta-constitutiva.pdf" target="_blank" rel="noopener">Ver</a>
+            <a href="docs/acta-constitutiva.docx" download>Descargar (.docx)</a>
+          </div>
+        </div>
+        <div class="pv-link-row">
+          <span class="name">Reglamento interno del comité</span>
+          <div class="links">
+            <a href="docs/reglamento-interno.pdf" target="_blank" rel="noopener">Ver</a>
+            <a href="docs/reglamento-interno.docx" download>Descargar (.docx)</a>
+          </div>
+        </div>
+        <div class="pv-link-row">
+          <span class="name">Minuta — Primera reunión del comité</span>
+          <div class="links">
+            <span class="placeholder">[Ver acta]</span>
+            <span class="placeholder">[Descargar]</span>
+          </div>
+        </div>
+        <div class="pv-link-row">
+          <span class="name">Minuta — [FECHA]</span>
+          <div class="links">
+            <span class="placeholder">[Ver acta]</span>
+            <span class="placeholder">[Descargar]</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Enlaces de interés -->
+    <section class="pv-section" id="enlaces">
+      <div class="pv-section-head"><span class="dot"></span><h2>Enlaces de interés</h2></div>
+      <div class="pv-grid-3">
+        <a href="https://www.hermosillo.gob.mx/" target="_blank" rel="noopener" class="pv-card pv-card-news">
+          <div class="pv-card-logo-wrap"><img src="img/ayuntamiento.png" alt="H. Ayuntamiento de Hermosillo"></div>
+          <div class="pv-card-body">
+            <h3>Ayuntamiento de Hermosillo</h3>
+            <span class="pv-card-readmore">Visitar sitio</span>
+          </div>
+        </a>
+        <a href="https://app.cfe.mx/Aplicaciones/CCFE/MiEspacio/AvisoVUN.aspx" target="_blank" rel="noopener" class="pv-card pv-card-news">
+          <div class="pv-card-logo-wrap"><img src="img/cfe.png" alt="CFE"></div>
+          <div class="pv-card-body">
+            <h3>CFE — reportar fallas</h3>
+            <span class="pv-card-readmore">Visitar sitio</span>
+          </div>
+        </a>
+        <a href="https://www.hermosillo.gob.mx/entidades/seguridad-publica/" target="_blank" rel="noopener" class="pv-card pv-card-news">
+          <div class="pv-card-logo-wrap"><img src="img/seguridad.png" alt="Policía Municipal Hermosillo"></div>
+          <div class="pv-card-body">
+            <h3>Seguridad pública — [TELÉFONO]</h3>
+            <span class="pv-card-readmore">Visitar sitio</span>
+          </div>
+        </a>
+        <a href="https://www.hermosillo.gob.mx/pages/mapa-recoleccion-basura.aspx" target="_blank" rel="noopener" class="pv-card pv-card-news">
+          <div class="pv-card-logo-wrap"><img src="img/recoleccion.png" alt="Recolector de basura"></div>
+          <div class="pv-card-body">
+            <h3>Mapa de recolección de basura</h3>
+            <span class="pv-card-readmore">Visitar sitio</span>
+          </div>
+        </a>
+        <a href="https://presupuestocreces.hermosillo.gob.mx/" target="_blank" rel="noopener" class="pv-card pv-card-news">
+          <div class="pv-card-logo-wrap"><img src="img/creces.png" alt="Creces"></div>
+          <div class="pv-card-body">
+            <h3>Creces — presupuesto participativo</h3>
+            <span class="pv-card-readmore">Visitar sitio</span>
+          </div>
+        </a>
+        <a href="https://aguadehermosillo.gob.mx/aguah/" target="_blank" rel="noopener" class="pv-card pv-card-news">
+          <div class="pv-card-logo-wrap"><img src="img/agua.png" alt="Agua de Hermosillo"></div>
+          <div class="pv-card-body">
+            <h3>Agua de Hermosillo</h3>
+            <span class="pv-card-readmore">Visitar sitio</span>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <!-- Grupos de WhatsApp -->
+    <section class="pv-section" id="grupos" style="padding-bottom: 40px;">
+      <div class="pv-section-head"><span class="dot"></span><h2>Grupos de WhatsApp</h2></div>
+      <div class="pv-grid-2">
+        <div class="pv-wa-card">
+          <div><span class="t">Avisos generales</span><span class="s">Noticias y comunicados del comité</span></div>
+          <a href="#" class="pv-wa-btn">Unirme</a>
+        </div>
+        <div class="pv-wa-card">
+          <div><span class="t">Seguridad y vigilancia</span><span class="s">Alertas y reportes entre vecinos</span></div>
+          <a href="#" class="pv-wa-btn">Unirme</a>
+        </div>
+      </div>
+    </section>
+
+    </div>
+   </div>
+    <div class="pv-footer">Comité Vecinal · California Residencial — solo visible para residentes con cuenta.</div>
+  </div>
+
+  <!-- Modal de noticias -->
+  <div id="newsModalOverlay" onclick="if (event.target === this) closeNews();">
+    <div id="newsModalBox">
+      <button type="button" id="newsModalClose" onclick="closeNews()" aria-label="Cerrar">×</button>
+      <span id="newsModalDate"></span>
+      <h3 id="newsModalTitle"></h3>
+      <p id="newsModalBody"></p>
+      <a id="newsModalLink" href="#" target="_blank" rel="noopener" style="display:none;">Ver volante completo →</a>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="supabase-client.js"></script>
+  <script>
+    // Carrusel de avisos (debajo del encabezado, arriba de Noticias):
+    // rota entre las normas de convivencia y el volante de la asamblea.
+    // También se puede navegar con las flechas o los puntos.
+    (function () {
+      const slides = Array.from(document.querySelectorAll(".pv-carousel-slide"));
+      const dots = Array.from(document.querySelectorAll(".pv-carousel-dot"));
+      if (slides.length === 0) return;
+
+      let current = 0;
+      let timer = null;
+
+      function goTo(index) {
+        current = (index + slides.length) % slides.length;
+        slides.forEach((s, i) => s.classList.toggle("is-active", i === current));
+        dots.forEach((d, i) => d.classList.toggle("is-active", i === current));
+      }
+
+      function startAutoplay() {
+        clearInterval(timer);
+        timer = setInterval(() => goTo(current + 1), 6000);
+      }
+
+      document.getElementById("carouselPrevBtn").addEventListener("click", () => {
+        goTo(current - 1);
+        startAutoplay();
+      });
+      document.getElementById("carouselNextBtn").addEventListener("click", () => {
+        goTo(current + 1);
+        startAutoplay();
+      });
+      dots.forEach((d) => {
+        d.addEventListener("click", () => {
+          goTo(parseInt(d.getAttribute("data-dot"), 10));
+          startAutoplay();
+        });
+      });
+
+      startAutoplay();
+    })();
+
+    // Esta página solo es visible para quien tenga una sesión activa
+    // (residente o comité). Si no hay sesión, requireAuth() manda a index.html.
+    (async function () {
+      const auth = await requireAuth();
+      if (!auth) return;
+      document.getElementById("logoutBtn").addEventListener("click", signOut);
+      document.getElementById("loadingGate").style.display = "none";
+      document.getElementById("pvContent").style.display = "block";
+    })();
+
+    var newsData = {
+      asamblea: {
+        date: '16 de octubre de 2026',
+        title: 'Asamblea General Extraordinaria',
+        body: 'Convocamos a todos los residentes de Cerrada Córdoba a la Asamblea General Extraordinaria, para presentar al equipo que se postula como nuevo comité vecinal, el acta constitutiva y el reglamento interno. Tu participación es clave para darle formalidad oficial al comité.',
+        link: 'img/volante-asamblea.jpg',
+        linkText: 'Ver volante completo →'
+      },
+      comite: {
+        date: '7 de octubre de 2026',
+        title: 'Nuevo comité vecinal en marcha',
+        body: 'Un grupo de vecinos de Cerrada Córdoba — California Residencial se organizó para dar los primeros pasos en la formación de un comité vecinal oficial. El objetivo es representar los intereses del Residencial ante el ayuntamiento y los proveedores, y organizar temas como seguridad, limpieza, áreas verdes y finanzas comunes.\n\nComo siguiente paso, convocamos a toda la comunidad a la Asamblea General Extraordinaria el viernes 16 de octubre, a las 8:00 p.m., en el parque principal, donde se presentarán las propuestas y proyectos, entre ellos destacan: balance de ingresos y egresos, establecer una empresa de seguridad, actualización del sistema de CCTV, presentación del equipo de Creces y su acta constitutiva.\n\nGracias a todos los que se sumaron en la primera reunión — aquí iremos publicando los avances y próximos pasos.'
+      },
+      reciclaje: {
+        date: '[FECHA]',
+        title: 'Se retoma la recolección de reciclaje',
+        body: 'A partir de este mes vuelve el contenedor de reciclaje en la entrada. Coloca cartón y plástico separados los martes por la noche.\n\n[Más detalles próximamente.]'
+      },
+      porton: {
+        date: '[FECHA]',
+        title: 'Mantenimiento al portón principal',
+        body: 'El motor del acceso vehicular principal está presentando un calentamiento recurrente que compromete su funcionamiento.\n\nEsto se debe principalmente a dos factores: el alto flujo de tráfico del Residencial, que implica muchos ciclos de apertura y cierre al día, y el peso del portón —de 500 kg— que el motor debe mover en cada ciclo.\n\nPara realizar el cambio de motor también se evaluarán las condiciones físicas del portón, los rieles y las ruedas, ya que la fricción que generan produce desgaste en los materiales, lo cual puede tener un impacto importante en la vida del motor nuevo.\n\nActualmente se están cotizando modelos de diferentes marcas, considerando los costos según la necesidad que tenemos.\n\nMientras se define el reemplazo, el acceso seguirá trabajando de igual forma. Agradecemos su paciencia.'
+      }
+    };
+    function openNews(id) {
+      var item = newsData[id];
+      if (!item) return;
+      document.getElementById('newsModalDate').textContent = item.date;
+      document.getElementById('newsModalTitle').textContent = item.title;
+      document.getElementById('newsModalBody').textContent = item.body;
+      var linkEl = document.getElementById('newsModalLink');
+      if (item.link) {
+        linkEl.href = item.link;
+        linkEl.textContent = item.linkText || 'Ver más →';
+        linkEl.style.display = 'inline-block';
+      } else {
+        linkEl.style.display = 'none';
+      }
+      document.getElementById('newsModalOverlay').style.display = 'flex';
+    }
+    function closeNews() {
+      document.getElementById('newsModalOverlay').style.display = 'none';
+    }
+  </script>
+</body>
+</html>
