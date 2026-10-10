@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="styles.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&family=Kaushan+Script&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
   :root {
@@ -206,11 +206,11 @@
      izquierda en pantallas anchas. */
   .pv-layout { display: flex; align-items: flex-start; gap: 18px; width: 100%; padding: 0 0 0 18px; }
   .pv-sidebar {
-    flex: 0 0 240px;
+    flex: 0 0 460px;
     position: sticky;
     top: 82px;
     align-self: flex-start;
-    padding: 56px 0 40px 0;
+    padding: 56px 0 44px 0;
     background: linear-gradient(165deg, #FFFFFF 0%, #FBF3EA 55%, #F7EAD9 100%);
     border: 1px solid var(--border);
     border-radius: 16px;
@@ -218,7 +218,7 @@
   }
   .pv-sidebar .menu-title {
     display: flex; align-items: baseline; gap: 12px;
-    margin: 0 16px 20px 16px;
+    margin: 0 20px 22px 20px;
     font-family: var(--font-display);
     font-size: clamp(18px, 1rem + 0.4vw, 22px);
     font-weight: 600; letter-spacing: -0.01em; color: var(--ink);
@@ -227,22 +227,22 @@
   .pv-sidebar nav { display: flex; flex-direction: column; gap: 0; }
   .pv-sidebar a {
     position: relative;
-    display: flex; align-items: center; gap: 13px;
-    padding: 15px 16px; border-radius: 10px;
+    display: flex; align-items: center; gap: 16px;
+    padding: 17px 20px; border-radius: 10px;
     font-family: var(--font-display);
-    font-size: 15.5px; font-weight: 600; color: var(--ink-soft);
+    font-size: 18.5px; font-weight: 600; color: var(--ink-soft);
     text-decoration: none; transition: background .15s ease, color .15s ease;
   }
   .pv-sidebar nav a:not(:last-child)::after {
     content: "";
     position: absolute;
-    left: 44px;
-    right: 10px;
+    left: 52px;
+    right: 14px;
     bottom: 0;
     height: 1px;
     background: rgba(28,22,15,0.1);
   }
-  .pv-sidebar a svg { flex-shrink: 0; width: 21px; height: 21px; opacity: .75; transition: opacity .15s ease; }
+  .pv-sidebar a svg { flex-shrink: 0; width: 25px; height: 25px; opacity: .75; transition: opacity .15s ease; }
   .pv-sidebar a:hover { background: #FBF0E8; color: var(--accent-dark); }
   .pv-sidebar a:hover svg { opacity: 1; }
   .pv-sidebar a.is-active { background: var(--accent); color: #fff; }
@@ -351,12 +351,12 @@
 
   /* Modal de noticias */
   .topbar .brand {
-    font-family: var(--font-display);
-    font-size: clamp(16px, 1.1rem + 0.5vw, 22px);
-    font-weight: 700;
-    color: var(--ink);
-    letter-spacing: -0.01em;
-    line-height: 1.15;
+    font-family: 'Kaushan Script', cursive;
+    font-size: clamp(19px, 1.3rem + 0.6vw, 26px);
+    font-weight: 400;
+    color: #B86A3A;
+    letter-spacing: 0;
+    line-height: 1.2;
   }
 
   #newsModalOverlay {
