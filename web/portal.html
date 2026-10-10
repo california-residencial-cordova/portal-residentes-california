@@ -107,21 +107,23 @@
     font-weight: 500;
   }
 
-  /* Carrusel de avisos — va debajo del encabezado y arriba de Noticias,
-     como una franja de ancho completo (igual que el encabezado) */
+  /* Carrusel "Volantes de información" — ahora vive dentro del menú
+     lateral, debajo de "Menú Principal", con el mismo ancho que el menú
+     (en vez de ser una franja de ancho completo). */
   .pv-carousel-wrap {
     width: 100%;
-    margin: 26px 0 0 0;
+    margin: 0;
     padding: 0;
   }
   .pv-carousel {
     position: relative;
     width: 100%;
-    height: clamp(220px, 28vw, 380px);
+    aspect-ratio: 4 / 5;
     overflow: hidden;
     background: var(--bg);
-    border-top: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: var(--shadow-sm);
   }
   .pv-carousel-slide {
     position: absolute;
@@ -159,13 +161,13 @@
     top: 50%;
     transform: translateY(-50%);
     z-index: 3;
-    width: 34px;
-    height: 34px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     border: none;
     background: rgba(20,17,13,0.45);
     color: #fff;
-    font-size: 19px;
+    font-size: 16px;
     line-height: 1;
     cursor: pointer;
     display: flex;
@@ -173,19 +175,19 @@
     justify-content: center;
   }
   .pv-carousel-arrow:hover { background: rgba(20,17,13,0.68); }
-  .pv-carousel-arrow-prev { left: 12px; }
-  .pv-carousel-arrow-next { right: 12px; }
+  .pv-carousel-arrow-prev { left: 10px; }
+  .pv-carousel-arrow-next { right: 10px; }
   .pv-carousel-dots {
     position: absolute;
-    bottom: 14px;
-    right: 18px;
+    bottom: 12px;
+    right: 14px;
     z-index: 3;
     display: flex;
-    gap: 7px;
+    gap: 6px;
   }
   .pv-carousel-dot {
-    width: 8px;
-    height: 8px;
+    width: 7px;
+    height: 7px;
     border-radius: 50%;
     border: none;
     padding: 0;
@@ -193,6 +195,14 @@
     cursor: pointer;
   }
   .pv-carousel-dot.is-active { background: #fff; }
+
+  .pv-sidebar .carousel-title {
+    display: flex; align-items: baseline; gap: 12px;
+    margin: 34px 20px 16px 20px;
+    font-family: 'Kaushan Script', cursive;
+    font-size: clamp(23px, 1.3rem + 0.7vw, 31px);
+    font-weight: 400; letter-spacing: 0; color: #B86A3A;
+  }
 
   .pv-section { padding: 56px 24px 8px 24px; max-width: 980px; margin: 0 auto; }
   .pv-section-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 22px; }
@@ -223,7 +233,7 @@
     font-size: clamp(23px, 1.3rem + 0.7vw, 31px);
     font-weight: 400; letter-spacing: 0; color: #B86A3A;
   }
-  .pv-sidebar .menu-title .dot { width: 9px; height: 9px; background: var(--accent); border-radius: 50%; display: inline-block; flex-shrink: 0; transform: translateY(-2px); }
+  .pv-sidebar .menu-title .dot, .pv-sidebar .carousel-title .dot { width: 9px; height: 9px; background: var(--accent); border-radius: 50%; display: inline-block; flex-shrink: 0; transform: translateY(-2px); }
   /* El fondo degradado envuelve solo los enlaces (no el título), para que
      empiece y termine a la misma altura que el bloque de tarjetas de
      Noticias y avisos — igual que el título ya queda a la misma altura
@@ -236,7 +246,7 @@
     padding: 2px 0;
   }
   .pv-sidebar nav { display: flex; flex-direction: column; gap: 0; }
-  .pv-sidebar a {
+  .pv-sidebar-box a {
     position: relative;
     display: flex; align-items: center; gap: 16px;
     padding: 15px 20px; border-radius: 10px;
@@ -253,11 +263,11 @@
     height: 1px;
     background: rgba(28,22,15,0.1);
   }
-  .pv-sidebar a svg { flex-shrink: 0; width: 25px; height: 25px; opacity: .75; transition: opacity .15s ease; }
-  .pv-sidebar a:hover { background: #FBF0E8; color: var(--accent-dark); }
-  .pv-sidebar a:hover svg { opacity: 1; }
-  .pv-sidebar a.is-active { background: var(--accent); color: #fff; }
-  .pv-sidebar a.is-active svg { opacity: 1; }
+  .pv-sidebar-box a svg { flex-shrink: 0; width: 25px; height: 25px; opacity: .75; transition: opacity .15s ease; }
+  .pv-sidebar-box a:hover { background: #FBF0E8; color: var(--accent-dark); }
+  .pv-sidebar-box a:hover svg { opacity: 1; }
+  .pv-sidebar-box a.is-active { background: var(--accent); color: #fff; }
+  .pv-sidebar-box a.is-active svg { opacity: 1; }
   .pv-main { flex: 1; min-width: 0; max-width: 980px; margin: 0 auto; padding: 0 24px 0 0; }
   .pv-main .pv-section { max-width: none; margin: 0; padding-left: 0; padding-right: 0; }
   @media (max-width: 900px) {
@@ -274,7 +284,7 @@
     .pv-sidebar .menu-title { display: none; }
     .pv-sidebar nav { flex-direction: row; gap: 6px; }
     .pv-sidebar nav a::after { display: none; }
-    .pv-sidebar a { white-space: nowrap; padding: 8px 12px; }
+    .pv-sidebar-box a { white-space: nowrap; padding: 8px 12px; }
     .pv-main { max-width: none; padding: 0; }
     .pv-main .pv-section { padding-left: 24px; padding-right: 24px; }
   }
@@ -415,26 +425,6 @@
     </div>
   </div>
 
-  <div class="pv-carousel-wrap">
-    <div class="pv-carousel" id="pvCarousel">
-      <a class="pv-carousel-slide is-active" data-slide="0" href="img/normas-convivencia.jpg" target="_blank" rel="noopener" aria-label="Ver normas de convivencia en tamaño completo">
-        <div class="pv-carousel-bg" style="background-image:url('img/normas-convivencia.jpg');"></div>
-        <img src="img/normas-convivencia.jpg" alt="Normas de convivencia para la Asamblea Extraordinaria">
-      </a>
-      <a class="pv-carousel-slide" data-slide="1" href="img/volante-asamblea.jpg" target="_blank" rel="noopener" aria-label="Ver volante de la Asamblea General Extraordinaria en tamaño completo">
-        <div class="pv-carousel-bg" style="background-image:url('img/volante-asamblea.jpg');"></div>
-        <img src="img/volante-asamblea.jpg" alt="Volante de la Asamblea General Extraordinaria">
-      </a>
-
-      <button type="button" class="pv-carousel-arrow pv-carousel-arrow-prev" id="carouselPrevBtn" aria-label="Imagen anterior">‹</button>
-      <button type="button" class="pv-carousel-arrow pv-carousel-arrow-next" id="carouselNextBtn" aria-label="Imagen siguiente">›</button>
-      <div class="pv-carousel-dots" id="carouselDots">
-        <button type="button" class="pv-carousel-dot is-active" data-dot="0" aria-label="Ir a la imagen 1"></button>
-        <button type="button" class="pv-carousel-dot" data-dot="1" aria-label="Ir a la imagen 2"></button>
-      </div>
-    </div>
-  </div>
-
   <div id="loadingGate" class="loading">Verificando tu acceso…</div>
 
   <div id="pvContent" style="display:none;">
@@ -450,6 +440,27 @@
         <a href="#enlaces"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 15l6-6"/><path d="M10 6l1-1a4 4 0 0 1 6 6l-1 1"/><path d="M14 18l-1 1a4 4 0 0 1-6-6l1-1"/></svg>Enlaces</a>
         <a href="#grupos"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.4 8.5 8.5 0 0 1-4-1L3 20l1.1-5.5A8.38 8.38 0 0 1 12.5 3 8.5 8.5 0 0 1 21 11.5Z"/></svg>Grupos</a>
       </nav>
+      </div>
+
+      <div class="carousel-title"><span class="dot"></span>Volantes de información</div>
+      <div class="pv-carousel-wrap">
+        <div class="pv-carousel" id="pvCarousel">
+          <a class="pv-carousel-slide is-active" data-slide="0" href="img/normas-convivencia.jpg" target="_blank" rel="noopener" aria-label="Ver normas de convivencia en tamaño completo">
+            <div class="pv-carousel-bg" style="background-image:url('img/normas-convivencia.jpg');"></div>
+            <img src="img/normas-convivencia.jpg" alt="Normas de convivencia para la Asamblea Extraordinaria">
+          </a>
+          <a class="pv-carousel-slide" data-slide="1" href="img/volante-asamblea.jpg" target="_blank" rel="noopener" aria-label="Ver volante de la Asamblea General Extraordinaria en tamaño completo">
+            <div class="pv-carousel-bg" style="background-image:url('img/volante-asamblea.jpg');"></div>
+            <img src="img/volante-asamblea.jpg" alt="Volante de la Asamblea General Extraordinaria">
+          </a>
+
+          <button type="button" class="pv-carousel-arrow pv-carousel-arrow-prev" id="carouselPrevBtn" aria-label="Imagen anterior">‹</button>
+          <button type="button" class="pv-carousel-arrow pv-carousel-arrow-next" id="carouselNextBtn" aria-label="Imagen siguiente">›</button>
+          <div class="pv-carousel-dots" id="carouselDots">
+            <button type="button" class="pv-carousel-dot is-active" data-dot="0" aria-label="Ir a la imagen 1"></button>
+            <button type="button" class="pv-carousel-dot" data-dot="1" aria-label="Ir a la imagen 2"></button>
+          </div>
+        </div>
       </div>
     </aside>
     <div class="pv-main">
